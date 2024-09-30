@@ -21,6 +21,12 @@ import 'package:args/args.dart';
 void main(List<String> arguments) {
   // Get the arguments.
   final parser = ArgParser()
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Show this help message.',
+    )
     ..addOption(
       'root',
       abbr: 'r',
@@ -82,12 +88,10 @@ void main(List<String> arguments) {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File &&
-          systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // Find keys in the pattern '||key'.tr() or 'key'.tr(:
-        final regex =
-            RegExp(r"'(?:[^']+)\|\|([^']+)'\s*\.tr\(|'([^']+)'\s*\.tr\(");
+        final regex = RegExp(r"'(?:[^']+)\|\|([^']+)'\s*\.tr\(|'([^']+)'\s*\.tr\(");
         for (final match in regex.allMatches(content)) {
           final key = match.group(1) ?? match.group(2);
           if (key != null && key.isNotEmpty) {

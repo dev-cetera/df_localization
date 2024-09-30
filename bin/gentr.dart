@@ -19,7 +19,7 @@ import 'package:args/args.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 void main(List<String> arguments) {
-  // 1. Get the arguments.
+  // Get the arguments.
   final parser = ArgParser()
     ..addOption(
       'root',
@@ -38,16 +38,23 @@ void main(List<String> arguments) {
     );
 
   final argResults = parser.parse(arguments);
+
+  // Print help if requested.
+  if (argResults['help'] != null) {
+    printBlue(parser.usage);
+    return;
+  }
+
   final rootPath = argResults['root']?.toString() ?? '.';
   final outputPath = argResults['output']?.toString() ?? '.';
 
-  // 2. Check if the provided rootPath exists.
+  // Check if the provided rootPath exists.
   if (!Directory(rootPath).existsSync()) {
     printRed('[Error] The root directory does not exist: $rootPath');
     exit(1);
   }
 
-  // 3. Define a function to insert keys into the tanslation map.
+  // Define a function to insert keys into the tanslation map.
   void insertKeyIntoMap(Map<String, dynamic> translationMap, String key) {
     final parts = key.split('.');
 
@@ -69,7 +76,7 @@ void main(List<String> arguments) {
     }
   }
 
-  // 4. Recursively traverse the rootPath to find all keys in Dart files.
+  // Recursively traverse the rootPath to find all keys in Dart files.
   List<String> collectKeys(String rootPath) {
     final keys = <String>[];
     final dir = Directory(rootPath);
@@ -78,7 +85,7 @@ void main(List<String> arguments) {
       if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // Find keys in the pattern '||key'.tr() or 'key'.tr(:
-        final regex = RegExp(r"'(?:[^']+)\|\|([^']+)'\.tr\(|'([^']+)'\.tr\(");
+        final regex = RegExp(r"'(?:[^']+)\|\|([^']+)'\s*\.tr\(|'([^']+)'\s*\.tr\(");
         for (final match in regex.allMatches(content)) {
           final key = match.group(1) ?? match.group(2);
           if (key != null && key.isNotEmpty) {
@@ -90,23 +97,23 @@ void main(List<String> arguments) {
     return keys;
   }
 
-  // 5. Collect all keys and add them to the translationMap.
+  // Collect all keys and add them to the translationMap.
   final translationMap = <String, dynamic>{};
   final keys = collectKeys(rootPath)..sort();
   for (final key in keys) {
     insertKeyIntoMap(translationMap, key);
   }
 
-  // 6. Get the output file extension:
+  // Get the output file extension:
   final extension = p.extension(outputPath).toLowerCase();
   final isJson = extension == '.json' || extension == '.jsonc';
   final isYaml = extension == '.yaml' || extension == '.yml';
 
-  // 7. Create the translation output file.
+  // Create the translation output file.
   final translationFile = File(outputPath);
   final translationSink = translationFile.openWrite();
 
-  // 8. Write output as JSON or YAML.
+  // Write output as JSON or YAML.
   if (isJson) {
     translationSink.write(
       const JsonEncoder.withIndent('  ').convert(translationMap),

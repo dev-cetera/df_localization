@@ -26,6 +26,7 @@ final class Localization {
   }
 
   static var _reader = TranslationFileReader(
+    translationsDirPath: ['assets', 'translations'],
     fileReader: (filePath) {
       return rootBundle.loadString(
         filePath,

@@ -15,4 +15,5 @@ library;
 
 export 'src/localization.dart';
 
+export 'package:df_config/df_translate.dart';
 export 'package:df_pod/df_pod.dart';

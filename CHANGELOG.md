@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.4]
+
+- Released @ 9/2024 (UTC)
+- chore: Update gentr script with improved regex
+
 ## [0.1.3]
 
 - Released @ 9/2024 (UTC)

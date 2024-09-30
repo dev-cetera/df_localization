@@ -12,7 +12,7 @@
 
 name: df_localization
 description: A package that provides an easy way to add localization to your Flutter app.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/robmllze/df_localization
 funding:
   - https://www.buymeacoffee.com/robmllze

@@ -17,11 +17,11 @@ repository: https://github.com/robmllze/df_localization
 funding:
   - https://www.buymeacoffee.com/robmllze
 topics:
-  - localization
-  - translation
   - configuration
+  - locale
+  - localization
   - state-management
-  - df_pod
+  - translation
 
 ## -----------------------------------------------------------------------------
 
@@ -42,4 +42,4 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0   d
+  flutter_lints: ^4.0.0

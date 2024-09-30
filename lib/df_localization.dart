@@ -14,3 +14,5 @@
 library;
 
 export 'src/localization.dart';
+
+export 'package:df_pod/df_pod.dart';

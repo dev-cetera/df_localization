@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.5]
+
+- Released @ 9/2024 (UTC)
+- fix: Fix help bug in gentr.dart
+
 ## [0.1.4]
 
 - Released @ 9/2024 (UTC)

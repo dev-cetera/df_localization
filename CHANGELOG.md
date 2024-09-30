@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.6]
+
+- Released @ 9/2024 (UTC)
+- fix: Fix bug with help (again)
+
 ## [0.1.5]
 
 - Released @ 9/2024 (UTC)

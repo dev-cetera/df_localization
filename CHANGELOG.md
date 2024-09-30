@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.3]
+
+- Released @ 9/2024 (UTC)
+- feat: Add gentr script to generate translation files based on source code
+
 ## [0.1.2]
 
 - Released @ 9/2024 (UTC)

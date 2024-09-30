@@ -74,7 +74,8 @@ void main(List<String> arguments) {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File &&
+          systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // Find keys in the pattern '||key'.tr() or 'key'.tr(:
         final regex = RegExp(r"'(?:[^']+)\|\|([^']+)'\.tr\(|'([^']+)'\.tr\(");

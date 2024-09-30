@@ -46,7 +46,7 @@ void main(List<String> arguments) {
   final argResults = parser.parse(arguments);
 
   // Print help if requested.
-  if (argResults['help'] != null) {
+  if (argResults['help'] == true) {
     printBlue(parser.usage);
     return;
   }

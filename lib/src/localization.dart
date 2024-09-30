@@ -13,7 +13,8 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/widgets.dart' show Locale;
 
-import 'package:df_config/df_translate_src/translation_file_reader.dart' show TranslationFileReader;
+import 'package:df_config/df_translate_src/translation_file_reader.dart'
+    show TranslationFileReader;
 import 'package:df_pod/df_pod.dart' show SharedPod;
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -65,7 +66,8 @@ final class Localization {
       return locale;
     },
     toValue: (locale) {
-      final languageTag = (locale ?? _FALLBACK_LOCALE).toLanguageTag().toLowerCase();
+      final languageTag =
+          (locale ?? _FALLBACK_LOCALE).toLanguageTag().toLowerCase();
       () async {
         try {
           await _reader.read(languageTag);

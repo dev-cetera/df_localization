@@ -23,7 +23,6 @@ dependencies:
   path: ^1.9.0
   args: ^2.5.0
   yaml: ^3.1.2
-  yaml_writer: ^2.0.0
 
   df_log: ^0.2.1
 

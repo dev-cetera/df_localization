@@ -15,7 +15,8 @@ import 'dart:io';
 import 'package:df_log/df_log.dart';
 import 'package:path/path.dart' as p;
 import 'package:args/args.dart';
-import 'package:yaml_writer/yaml_writer.dart';
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 void main(List<String> arguments) {
   // 1. Get the arguments.
@@ -32,7 +33,7 @@ void main(List<String> arguments) {
       help: 'Output path for the generated translation JSON.',
       defaultsTo: p.join(
         Directory.current.path,
-        'translations.json',
+        'translations.yaml',
       ),
     );
 
@@ -74,8 +75,7 @@ void main(List<String> arguments) {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File &&
-          systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // Find keys in the pattern '||key'.tr() or 'key'.tr(:
         final regex = RegExp(r"'(?:[^']+)\|\|([^']+)'\.tr\(|'([^']+)'\.tr\(");
@@ -113,12 +113,30 @@ void main(List<String> arguments) {
     );
     translationSink.close();
   } else if (isYaml) {
-    final yamlWriter = YamlWriter();
-    translationSink.write(yamlWriter.write(translationMap));
+    translationSink.write(mapToYaml(translationMap));
     translationSink.close();
   }
 
   printGreen(
     '[Success] Translation file generated at: $outputPath',
   );
+}
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+// Convert a map to a YAML string.
+String mapToYaml(Map<String, dynamic> map, {int indent = 0}) {
+  final buffer = StringBuffer();
+  final spaces = ' ' * indent;
+
+  map.forEach((key, value) {
+    if (value is Map<String, dynamic>) {
+      buffer.writeln('$spaces$key:');
+      buffer.write(mapToYaml(value, indent: indent + 2));
+    } else {
+      buffer.writeln('$spaces$key: $value');
+    }
+  });
+
+  return buffer.toString();
 }

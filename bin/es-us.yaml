@@ -1,0 +1,10 @@
+Language: "Idioma"
+No: "No"
+Ok: "Ok"
+app_name: "Nombre de la aplicación"
+user:
+  email: "Correo electrónico del usuario"
+  metadata:
+    url: "URL del usuario: {url}"
+  name: "Nombre del usuario"
+yes: "sí"

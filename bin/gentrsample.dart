@@ -20,6 +20,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 void main(List<String> arguments) async {
+  DebugLog.debugOnly = false;
+  debugLogStart('Starting generator. Please wait...');
   // Get the arguments.
   final parser = ArgParser()
     ..addFlag(
@@ -36,8 +38,7 @@ void main(List<String> arguments) async {
     )
     ..addOption(
       'gemeni_api_key',
-      help:
-          'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
+      help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
     )
     ..addOption(
       'gemeni_model',
@@ -57,10 +58,9 @@ void main(List<String> arguments) async {
       defaultsTo: Directory.current.path,
     )
     ..addOption(
-      'output_type',
+      'type',
       abbr: 't',
-      help:
-          'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
+      help: 'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
       defaultsTo: 'yaml',
     );
 
@@ -76,20 +76,21 @@ void main(List<String> arguments) async {
   final gemeniApiKey = argResults['gemeni_api_key']?.toString().trim();
   final gemeniModel = argResults['gemeni_model']!.toString().trim();
   final locale = argResults['locale']!.toString().trim();
-  final outputType = argResults['output_type']!.toString().toLowerCase().trim();
+  final type = argResults['type']!.toString().toLowerCase().trim();
   final outputDirPath = argResults['output']!.toString().trim();
-  final outputFilePath =
-      '${p.join(outputDirPath, locale)}.$outputType'.toLowerCase();
+  final outputFilePath = '${p.join(outputDirPath, locale)}.$type'.toLowerCase();
 
   // Check if the provided rootPath exists.
   if (!Directory(rootPath).existsSync()) {
-    printRed('[Error] The root directory does not exist: $rootPath');
+    debugLogError('Error! The root directory does not exist: $rootPath');
     exit(1);
   }
 
   // Define a function to insert pairs into the tanslation map.
   void insertPairIntoMap(
-      Map<String, dynamic> translationMap, MapEntry<String, String> pair,) {
+    Map<String, dynamic> translationMap,
+    MapEntry<String, String> pair,
+  ) {
     final keyParts = pair.key.split('.');
     for (var i = 0; i < keyParts.length; i++) {
       final part = keyParts[i];
@@ -100,8 +101,8 @@ void main(List<String> arguments) async {
         try {
           translationMap = translationMap[part] as Map<String, dynamic>;
         } catch (e) {
-          printRed(
-            '[Error] The key “$part” is being used both as a string value and as a map (e.g., “$part”: “value” and “$part”: {“key”: “value”}). It must be one or the other. Please correct this in your code and try again.',
+          debugLogError(
+            'Error! The key “$part” is being used both as a string value and as a map (e.g., “$part”: “value” and “$part”: {“key”: “value”}). It must be one or the other. Please correct this in your code and try again.',
           );
           exit(1);
         }
@@ -115,17 +116,18 @@ void main(List<String> arguments) async {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File &&
-          systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // See: regexr.com/86id8
-        final regex =
-            RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
+        final regex = RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
         for (final match in regex.allMatches(content)) {
-          final key = (match.group(2) ?? 'key_${pairs.length}').toLowerCase();
-          final value =
-              match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
-          pairs[key] = '"$value"';
+          final key = (match.group(2) ?? 'key_${pairs.length}');
+          final value = match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
+          final existing = pairs.keys.firstWhere(
+            (k) => k.toLowerCase() == key.toLowerCase(),
+            orElse: () => key,
+          );
+          pairs[existing] = value;
         }
       }
     }
@@ -134,55 +136,63 @@ void main(List<String> arguments) async {
 
   // Collect all keys and add them to the translationMap.
   final translationMap = <String, dynamic>{};
-  final pairs = collectPairs(rootPath).entries.toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
+  final pairs = collectPairs(rootPath).entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   for (final pair in pairs) {
     insertPairIntoMap(translationMap, pair);
   }
 
   // Get the output file extension:
-  final isJson = outputType == 'json' || outputType == 'jsonc';
-  final isYaml = outputType == 'yaml' || outputType == 'yml';
+  final isJson = type == 'json' || type == 'jsonc';
+  final isYaml = type == 'yaml' || type == 'yml';
 
   // Create the translation output file.
   final translationFile = File(outputFilePath);
   final translationSink = translationFile.openWrite();
 
-  // / Create the directory if it doesn't exist.
+  // Create the directory if it doesn't exist.
   final directory = Directory(outputDirPath).parent;
   if (!directory.existsSync()) {
     directory.createSync(recursive: true);
   }
 
+  // Translate using Gemeni if an API key is provided and verify that the
+  // translation is valid JSON.
+  Map<String, dynamic> checked;
+  try {
+    final input = const JsonEncoder.withIndent('  ').convert(translationMap);
+    final transalted = gemeniApiKey != null
+        ? await translateWithGemeni(
+            data: input,
+            gemeniApiKey: gemeniApiKey,
+            gemeniModel: gemeniModel,
+            locale: locale,
+          )
+        : input;
+
+    checked = (jsonDecode(transalted) as Map).cast<String, dynamic>();
+  } catch (e) {
+    debugLogError(
+      'Error! The translation could not be generated. Please check your Gemeni API key and try again.',
+    );
+    exit(1);
+  }
+
   // Write output as JSON or YAML.
   if (isJson) {
-    final data = const JsonEncoder.withIndent('  ').convert(translationMap);
-    final transaltedData = gemeniApiKey != null
-        ? await translateWithGemeni(
-            data: data,
-            gemeniApiKey: gemeniApiKey,
-            gemeniModel: gemeniModel,
-            locale: locale,
-          )
-        : data;
-    translationSink.write(transaltedData);
+    final output = const JsonEncoder.withIndent('  ').convert(checked);
+    translationSink.write(output);
     translationSink.close();
   } else if (isYaml) {
-    final data = mapToYaml(translationMap);
-    final transaltedData = gemeniApiKey != null
-        ? await translateWithGemeni(
-            data: data,
-            gemeniApiKey: gemeniApiKey,
-            gemeniModel: gemeniModel,
-            locale: locale,
-          )
-        : data;
-    translationSink.write(transaltedData);
+    final output = mapToYaml(checked);
+    translationSink.write(output);
     translationSink.close();
   }
 
-  printGreen(
-    '[Success] Translation file generated at: $outputFilePath',
+  // ---------------------------------------------------------------------------
+
+  // Notify end.
+  debugLogSuccess(
+    'Success! Translation file generated at: $outputFilePath',
   );
 }
 
@@ -198,7 +208,7 @@ String mapToYaml(Map<String, dynamic> map, {int indent = 0}) {
       buffer.writeln('$spaces$key:');
       buffer.write(mapToYaml(value, indent: indent + 2));
     } else {
-      buffer.writeln('$spaces$key: $value');
+      buffer.writeln('$spaces$key: "$value"');
     }
   });
 
@@ -208,7 +218,7 @@ String mapToYaml(Map<String, dynamic> map, {int indent = 0}) {
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 /// Translate [data] to [locale] using Gemeni.
-Future<String?> translateWithGemeni({
+Future<String> translateWithGemeni({
   required String data,
   required String gemeniApiKey,
   required String gemeniModel,
@@ -220,9 +230,22 @@ Future<String?> translateWithGemeni({
   );
 
   final content = [
-    Content.text('Transalte the following translation file into $locale:'),
+    Content.text('Translate the following JSON translation file into $locale:'),
     Content.text(data),
   ];
+
   final response = await model.generateContent(content);
-  return response.text;
+  var text = response.text!.trim();
+
+  // Remove the markdown metadata.
+  if (text.startsWith('```json')) {
+    text = text.substring('```json'.length);
+  }
+  if (text.startsWith('```yaml')) {
+    text = text.substring('```yaml'.length);
+  }
+  if (text.endsWith('```')) {
+    text = text.substring(0, text.length - 3);
+  }
+  return text.trim();
 }

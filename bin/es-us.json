@@ -1,0 +1,14 @@
+{
+  "app_name": "Nombre de la aplicación",
+  "language": "Idioma",
+  "no": "No",
+  "ok": "Ok",
+  "user": {
+    "email": "Correo electrónico del usuario",
+    "metadata": {
+      "url": "URL del usuario: {url}"
+    },
+    "name": "Nombre del usuario"
+  },
+  "yes": "sí"
+}

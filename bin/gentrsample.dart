@@ -36,7 +36,8 @@ void main(List<String> arguments) async {
     )
     ..addOption(
       'gemeni_api_key',
-      help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
+      help:
+          'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
     )
     ..addOption(
       'gemeni_model',
@@ -58,7 +59,8 @@ void main(List<String> arguments) async {
     ..addOption(
       'output_type',
       abbr: 't',
-      help: 'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
+      help:
+          'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
       defaultsTo: 'yaml',
     );
 
@@ -76,7 +78,8 @@ void main(List<String> arguments) async {
   final locale = argResults['locale']!.toString().trim();
   final outputType = argResults['output_type']!.toString().toLowerCase().trim();
   final outputDirPath = argResults['output']!.toString().trim();
-  final outputFilePath = '${p.join(outputDirPath, locale)}.$outputType'.toLowerCase();
+  final outputFilePath =
+      '${p.join(outputDirPath, locale)}.$outputType'.toLowerCase();
 
   // Check if the provided rootPath exists.
   if (!Directory(rootPath).existsSync()) {
@@ -85,7 +88,8 @@ void main(List<String> arguments) async {
   }
 
   // Define a function to insert pairs into the tanslation map.
-  void insertPairIntoMap(Map<String, dynamic> translationMap, MapEntry<String, String> pair) {
+  void insertPairIntoMap(
+      Map<String, dynamic> translationMap, MapEntry<String, String> pair,) {
     final keyParts = pair.key.split('.');
     for (var i = 0; i < keyParts.length; i++) {
       final part = keyParts[i];
@@ -111,13 +115,16 @@ void main(List<String> arguments) async {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File &&
+          systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // See: regexr.com/86id8
-        final regex = RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
+        final regex =
+            RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
         for (final match in regex.allMatches(content)) {
           final key = (match.group(2) ?? 'key_${pairs.length}').toLowerCase();
-          final value = match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
+          final value =
+              match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
           pairs[key] = '"$value"';
         }
       }
@@ -127,7 +134,8 @@ void main(List<String> arguments) async {
 
   // Collect all keys and add them to the translationMap.
   final translationMap = <String, dynamic>{};
-  final pairs = collectPairs(rootPath).entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+  final pairs = collectPairs(rootPath).entries.toList()
+    ..sort((a, b) => a.key.compareTo(b.key));
   for (final pair in pairs) {
     insertPairIntoMap(translationMap, pair);
   }

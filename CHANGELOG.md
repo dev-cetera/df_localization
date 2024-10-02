@@ -3,7 +3,7 @@
 ## [0.1.8]
 
 - Released @ 10/2024 (UTC)
-- chore: Update generator and improve bugs
+- chore: Update generator and fix bugs
 
 ## [0.1.7]
 

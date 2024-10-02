@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.8]
+
+- Released @ 10/2024 (UTC)
+- chore: Update generator and improve bugs
+
 ## [0.1.7]
 
 - Released @ 10/2024 (UTC)

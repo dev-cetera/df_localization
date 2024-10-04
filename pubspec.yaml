@@ -45,6 +45,12 @@ dependencies:
 
 ## -----------------------------------------------------------------------------
 
+# Flutter stable channel does not yet support ^1.19.0.
+dependency_overrides:
+  collection: ^1.18.0
+
+## -----------------------------------------------------------------------------
+
 dev_dependencies:
   flutter_lints: ^5.0.0
 

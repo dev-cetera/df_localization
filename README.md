@@ -17,7 +17,7 @@ For a full feature set, please refer to the [API reference](https://pub.dev/docu
 
 ## Usage Example
 
-Coming soon.
+Unavailable. Please check in later.
 
 ## Installation
 

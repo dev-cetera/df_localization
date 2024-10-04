@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1]
+
+- Released @ 10/2024 (UTC)
+- chore: Update readme
+
 ## [0.2.0]
 
 - Released @ 10/2024 (UTC)

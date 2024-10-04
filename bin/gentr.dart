@@ -38,8 +38,7 @@ void main(List<String> arguments) async {
     )
     ..addOption(
       'gemeni_api_key',
-      help:
-          'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
+      help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
     )
     ..addOption(
       'gemeni_model',
@@ -61,8 +60,7 @@ void main(List<String> arguments) async {
     ..addOption(
       'type',
       abbr: 't',
-      help:
-          'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
+      help: 'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
       defaultsTo: 'yaml',
     );
 
@@ -112,27 +110,38 @@ void main(List<String> arguments) async {
     }
   }
 
+  bool isWord(String input) {
+    // Define a regular expression to match valid words
+    final regex = RegExp(r'^[a-zA-Z0-9_-]+$');
+
+    // Check if the input matches the regular expression
+    return regex.hasMatch(input);
+  }
+
   // Recursively traverse the rootPath to find all keys in Dart files.
   Map<String, String> collectPairs(String rootPath) {
     final pairs = <String, String>{};
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File &&
-          systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // See: regexr.com/86id8
-        final regex =
-            RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
+        final regex = RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
         for (final match in regex.allMatches(content)) {
           final key = (match.group(2) ?? 'key_${pairs.length}');
-          final value =
-              match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
-          final existing = pairs.keys.firstWhere(
+          final value = match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
+          final keyOrExisting = pairs.keys.firstWhere(
             (k) => k.toLowerCase() == key.toLowerCase(),
             orElse: () => key,
           );
-          pairs[existing] = value;
+          if (isWord(keyOrExisting)) {
+            pairs[keyOrExisting] = value;
+          } else {
+            debugLogAlert(
+              'Warning! The key “$key” is not a valid word. It will be ignored.',
+            );
+          }
         }
       }
     }
@@ -141,8 +150,7 @@ void main(List<String> arguments) async {
 
   // Collect all keys and add them to the translationMap.
   final translationMap = <String, dynamic>{};
-  final pairs = collectPairs(rootPath).entries.toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
+  final pairs = collectPairs(rootPath).entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   for (final pair in pairs) {
     insertPairIntoMap(translationMap, pair);
   }

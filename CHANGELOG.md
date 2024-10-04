@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.9]
+
+- Released @ 10/2024 (UTC)
+- fix: Fix gentr script to ignore invalid keys so that output is valid
+
 ## [0.1.8]
 
 - Released @ 10/2024 (UTC)

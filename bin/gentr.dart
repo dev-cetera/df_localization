@@ -21,7 +21,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 void main(List<String> arguments) async {
   DebugLog.debugOnly = false;
-  debugLogStart('Starting generator. Please wait...');
+  printBlue('Starting generator. Please wait...');
   // Get the arguments.
   final parser = ArgParser()
     ..addFlag(
@@ -38,8 +38,7 @@ void main(List<String> arguments) async {
     )
     ..addOption(
       'gemeni_api_key',
-      help:
-          'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
+      help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
     )
     ..addOption(
       'gemeni_model',
@@ -61,8 +60,7 @@ void main(List<String> arguments) async {
     ..addOption(
       'type',
       abbr: 't',
-      help:
-          'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
+      help: 'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
       defaultsTo: 'yaml',
     );
 
@@ -84,7 +82,7 @@ void main(List<String> arguments) async {
 
   // Check if the provided rootPath exists.
   if (!Directory(rootPath).existsSync()) {
-    debugLogError('Error! The root directory does not exist: $rootPath');
+    printRed('Error! The root directory does not exist: $rootPath');
     exit(1);
   }
 
@@ -103,7 +101,7 @@ void main(List<String> arguments) async {
         try {
           translationMap = translationMap[part] as Map<String, dynamic>;
         } catch (e) {
-          debugLogError(
+          printRed(
             'Error! The key “$part” is being used both as a string value and as a map (e.g., “$part”: “value” and “$part”: {“key”: “value”}). It must be one or the other. Please correct this in your code and try again.',
           );
           exit(1);
@@ -126,16 +124,13 @@ void main(List<String> arguments) async {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File &&
-          systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // See: regexr.com/86id8
-        final regex =
-            RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
+        final regex = RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
         for (final match in regex.allMatches(content)) {
           final key = (match.group(2) ?? 'key_${pairs.length}');
-          final value =
-              match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
+          final value = match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
           final keyOrExisting = pairs.keys.firstWhere(
             (k) => k.toLowerCase() == key.toLowerCase(),
             orElse: () => key,
@@ -143,7 +138,7 @@ void main(List<String> arguments) async {
           if (isWord(keyOrExisting)) {
             pairs[keyOrExisting] = value;
           } else {
-            debugLogAlert(
+            printYellow(
               'Warning! The key “$key” is not a valid word. It will be ignored.',
             );
           }
@@ -155,8 +150,7 @@ void main(List<String> arguments) async {
 
   // Collect all keys and add them to the translationMap.
   final translationMap = <String, dynamic>{};
-  final pairs = collectPairs(rootPath).entries.toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
+  final pairs = collectPairs(rootPath).entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   for (final pair in pairs) {
     insertPairIntoMap(translationMap, pair);
   }
@@ -191,7 +185,7 @@ void main(List<String> arguments) async {
 
     checked = (jsonDecode(transalted) as Map).cast<String, dynamic>();
   } catch (e) {
-    debugLogError(
+    printRed(
       'Error! The translation could not be generated. Please check your Gemeni API key and try again.',
     );
     exit(1);
@@ -211,9 +205,7 @@ void main(List<String> arguments) async {
   // ---------------------------------------------------------------------------
 
   // Notify end.
-  debugLogSuccess(
-    'Success! Translation file generated at: $outputFilePath',
-  );
+  printGreen('Success! Translation file generated at: $outputFilePath');
 }
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -257,15 +249,17 @@ Future<String> translateWithGemeni({
   final response = await model.generateContent(content);
   var text = response.text!.trim();
 
-  // Remove the markdown metadata.
-  if (text.startsWith('```json')) {
-    text = text.substring('```json'.length);
+  // Remove any markdown code block wrapping.
+  if (text.startsWith('```')) {
+    // Remove the opening code block.
+    final startIndex = text.indexOf('\n') + 1; // Start after the first newline
+    text = text.substring(startIndex);
+
+    // Remove the closing code block if it exists.
+    if (text.endsWith('```')) {
+      text = text.substring(0, text.length - 3).trim();
+    }
   }
-  if (text.startsWith('```yaml')) {
-    text = text.substring('```yaml'.length);
-  }
-  if (text.endsWith('```')) {
-    text = text.substring(0, text.length - 3);
-  }
+
   return text.trim();
 }

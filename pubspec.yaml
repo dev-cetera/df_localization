@@ -12,7 +12,7 @@
 
 name: df_localization
 description: A package that provides an easy way to add localization to your Flutter app.
-version: 0.2.2
+version: 0.3.0
 repository: https://github.com/robmllze/df_localization
 funding:
   - https://www.buymeacoffee.com/robmllze
@@ -34,9 +34,9 @@ dependencies:
   flutter:
     sdk: flutter
 
-  df_config: ^0.5.0
+  df_config: ^0.5.3
   df_log: ^0.2.4
-  df_pod: ^0.14.1
+  df_pod: ^0.14.3
 
   args: ^2.6.0
   google_generative_ai: ^0.4.6
@@ -51,4 +51,4 @@ dev_dependencies:
   ## -----------------------------------------------------------------------------
 
 executables:
-  gentr: gentr
+  dftr: dftr

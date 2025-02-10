@@ -1,7 +1,7 @@
 ##.title
 ## ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 ##
-## Dart/Flutter (DF) Packages by DevCetra.com & contributors. The use of this
+## Dart/Flutter (DF) Packages by dev-cetera.com & contributors. The use of this
 ## source code is governed by an MIT-style license described in the LICENSE
 ## file located in this project's root directory.
 ##
@@ -12,10 +12,10 @@
 
 name: df_localization
 description: A package that provides an easy way to add localization to your Flutter app.
-version: 0.3.0
-repository: https://github.com/robmllze/df_localization
+version: 0.4.0
+repository: https://github.com/dev-cetera/df_localization
 funding:
-  - https://www.buymeacoffee.com/robmllze
+  - https://www.buymeacoffee.com/dev_cetera
 topics:
   - configuration
   - locale
@@ -34,9 +34,9 @@ dependencies:
   flutter:
     sdk: flutter
 
-  df_config: ^0.5.3
+  df_config: ^0.6.0
   df_log: ^0.2.4
-  df_pod: ^0.14.3
+  df_pod: ^0.14.12
 
   args: ^2.6.0
   google_generative_ai: ^0.4.6
@@ -51,4 +51,4 @@ dev_dependencies:
   ## -----------------------------------------------------------------------------
 
 executables:
-  dftr: dftr
+  gen_translations: gen_translations

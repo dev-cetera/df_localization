@@ -1,7 +1,7 @@
 //.title
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //
-// Dart/Flutter (DF) Packages by DevCetra.com & contributors. The use of this
+// Dart/Flutter (DF) Packages by dev-cetera.com & contributors. The use of this
 // source code is governed by an MIT-style license described in the LICENSE
 // file located in this project's root directory.
 //
@@ -38,8 +38,7 @@ void main(List<String> arguments) async {
     )
     ..addOption(
       'gemeni_api_key',
-      help:
-          'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
+      help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
     )
     ..addOption(
       'gemeni_model',
@@ -61,8 +60,7 @@ void main(List<String> arguments) async {
     ..addOption(
       'type',
       abbr: 't',
-      help:
-          'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
+      help: 'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
       defaultsTo: 'yaml',
     );
 
@@ -126,16 +124,13 @@ void main(List<String> arguments) async {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File &&
-          systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // See: regexr.com/86id8
-        final regex =
-            RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
+        final regex = RegExp(r'''["'](?:([^|"']+)\|\|)?([^"']+)["']\s*\.\s*tr\(''');
         for (final match in regex.allMatches(content)) {
           final key = (match.group(2) ?? 'key_${pairs.length}');
-          final value =
-              match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
+          final value = match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
           final keyOrExisting = pairs.keys.firstWhere(
             (k) => k.toLowerCase() == key.toLowerCase(),
             orElse: () => key,
@@ -155,8 +150,7 @@ void main(List<String> arguments) async {
 
   // Collect all keys and add them to the translationMap.
   final translationMap = <String, dynamic>{};
-  final pairs = collectPairs(rootPath).entries.toList()
-    ..sort((a, b) => a.key.compareTo(b.key));
+  final pairs = collectPairs(rootPath).entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   for (final pair in pairs) {
     insertPairIntoMap(translationMap, pair);
   }

@@ -13,8 +13,7 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/widgets.dart' show Locale;
 
-import 'package:df_config/df_translate_src/translation_file_reader.dart'
-    show TranslationFileReader;
+import 'package:df_config/df_config.dart';
 import 'package:df_pod/df_pod.dart' show SharedPod;
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░

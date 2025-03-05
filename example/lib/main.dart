@@ -4,9 +4,12 @@ import 'dart:convert';
 
 import 'package:df_config/_common.dart';
 import 'package:df_config/df_config.dart';
+import 'package:df_pod/df_pod.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
+
+final pCache = Pod<Map<String, String>>({});
 
 void main() async {
   final idToken = await login(
@@ -15,39 +18,55 @@ void main() async {
     'AIzaSyAFElkmkKgn-5WOIegFtrSm3lRqtN4ajLA',
   );
   print(idToken);
-  final cache = <String, String>{};
-  var box = await Hive.openBox<String>('en-us');
+
+  String locale = 'af-za';
+
+  var box = await Hive.openBox<String>(locale);
 
   final firestore = Firestore(projectId: 'langchapp', accessToken: idToken);
-
-  final remoteFields = await firestore.read('translations/en-us');
+  final remoteFields = await firestore.read('translations/$locale');
 
   if (remoteFields != null) {
-    cache.addAll(
-      remoteFields.map((key, value) => MapEntry(key, value?.toString())).nonNulls,
+    pCache.update(
+      (e) =>
+          e..addAll(
+            remoteFields
+                .map((key, value) => MapEntry(key, value?.toString()))
+                .nonNulls,
+          ),
     );
-    box.putAll(cache);
+    box.putAll(pCache.value);
   }
 
-    final boxFields =
+  final boxFields =
       box
           .toMap()
           .map((key, value) => MapEntry(key?.toString(), value))
           .nonNulls;
 
-  if (boxFields != null) {
-    cache.addAll(boxFields);
-  }
+  pCache.update((e) => e..addAll(boxFields));
+
+  print(3);
 
   const ref = ConfigFileRef(ref: 'config');
   final config = FileConfig(
     ref: ref,
     mapper: (key) {
-      var value = cache[key];
+      var value = pCache.value[key];
       if (value == null) {
-        value = 'Hey!!!'; // mimic translate
-        firestore.patch('translations/en-us', {key: value}); // to db
-        box.put(key, value); // to local
+        value = key;
+        print(value);
+        translate(
+          value,
+          locale,
+          'AIzaSyDBpthU4aw_E4LtzIYeCizVwGk-QnJGTrA',
+        ).then((translated) async {
+          if (translated == null) return;
+          print(translated);
+          await firestore.patch('translations/$locale', {key: translated});
+          await box.put(key, translated);
+          pCache.update((e) => e..[key] = translated);
+        });
       }
       return value;
     },
@@ -62,10 +81,36 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(body: Text('bbb'.tr(args: {'bbb': 'Hola!'}))),
+    return PodBuilder(
+      pod: pCache,
+      builder: (context, snapshot) {
+        return MaterialApp(
+          key: UniqueKey(),
+          home: Scaffold(body: Column(children: [Text('How are you?'.tr())])),
+        );
+      },
     );
   }
+}
+
+Future<String?> translate(
+  String text,
+  String targetLocale,
+  String apiKey,
+) async {
+  final targetLang = targetLocale.split('-')[0];
+  final url = Uri.parse(
+    'https://translation.googleapis.com/language/translate/v2?key=$apiKey',
+  );
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'q': text, 'target': targetLang, 'format': 'text'}),
+  );
+  return jsonDecode(
+        utf8.decode(response.bodyBytes),
+      )?['data']?['translations']?[0]?['translatedText']
+      as String?;
 }
 
 Future<String> login(String email, String password, String apiKey) async {
@@ -107,7 +152,10 @@ class Firestore {
     final response = await _httpClient.get(url, headers: _authHeaders);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return convertToLocalJson(data);
+      final fields = data['fields'] as Map<String, dynamic>?;
+      if (fields != null) {
+        return convertToLocalJson(fields);
+      }
     }
     return null;
   }

@@ -5,6 +5,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  df_pod:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   http:

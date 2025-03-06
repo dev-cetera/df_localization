@@ -86,17 +86,22 @@ class Manager {
   Future<void> translateAndUpdate(String defaultValue, String key) async {
     await _sequential.add((_) async {
       await _initialInitCompleter.future;
-      // final test = Manager.pCache.value[key]?['to']?.toString();
-      // if (test == null) {
+      final test = Manager.pCache.value[key]?['to']?.toString();
+      //if (test == null) {
       await _translateAndUpdate(defaultValue, key);
       //}
       return const None();
     }).value;
   }
 
+  final _didRequestTranslate = <String>{};
+
   Future<void> _translateAndUpdate(String defaultValue, String key) async {
+    if (_didRequestTranslate.contains(key)) return;
+    _didRequestTranslate.add(key);
     final locale = _currentLocale!;
     final languageTag = locale.toLanguageTag().toLowerCase();
+
     print("TRANSLATING!!!");
     final translated = await GoogleTranslator.instance.translate(
       text: defaultValue,
@@ -184,6 +189,11 @@ class MyApp extends StatelessWidget {
                 Text(
                   'Welcome to this app {displayName}||welcome_message'.tr(
                     args: {'displayName': 'Robert'},
+                  ),
+                ),
+                Text(
+                  'Hey there my man, do you want {object}||hey_there'.tr(
+                    args: {'object': 'a brewski'},
                   ),
                 ),
               ],

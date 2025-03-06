@@ -10,8 +10,11 @@ dependencies:
   hive_flutter: ^1.1.0
   http:
   cupertino_icons: ^1.0.8
+  df_localization:
+    path: ../
   df_config:
     path: ../../df_config
+  df_safer_dart:
 dev_dependencies:
   flutter_test:
     sdk: flutter

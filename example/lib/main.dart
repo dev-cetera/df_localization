@@ -1,79 +1,114 @@
-// ignore_for_file: invalid_use_of_protected_member
-
-import 'dart:convert';
-
 import 'package:df_config/_common.dart';
-import 'package:df_config/df_config.dart';
+import 'package:df_localization/src/_etc/_etc.g.dart';
+
 import 'package:df_pod/df_pod.dart';
+import 'package:df_safer_dart/df_safer_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:http/http.dart' as http;
 
-final pCache = Pod<Map<String, String>>({});
+class Manager {
+  Manager();
 
-void main() async {
-  final idToken = await login(
-    'robmllze@gmail.com',
-    'Testing123',
-    'AIzaSyAFElkmkKgn-5WOIegFtrSm3lRqtN4ajLA',
-  );
-  print(idToken);
+  Box<String>? _box;
 
-  String locale = 'af-za';
+  final firestore = Firestore(projectId: 'langchapp');
 
-  var box = await Hive.openBox<String>(locale);
+  static final pCache = Pod<Map<String, String>>({});
 
-  final firestore = Firestore(projectId: 'langchapp', accessToken: idToken);
-  final remoteFields = await firestore.read('translations/$locale');
+  Locale? _currentLocale;
 
-  if (remoteFields != null) {
-    pCache.update(
-      (e) =>
-          e..addAll(
-            remoteFields
-                .map((key, value) => MapEntry(key, value?.toString()))
-                .nonNulls,
-          ),
-    );
-    box.putAll(pCache.value);
+  Future<Manager> init(Locale locale) async {
+    await _sequential.last.value;
+    pCache.set({});
+    _box?.close();
+    _box = null;
+    _currentLocale = locale;
+    final languageTag = locale.toLanguageTag();
+
+    // Update pCache with local fields.
+    _box = await Hive.openBox<String>(languageTag);
+    final localFields = _convertLocalFields(_box!.toMap());
+    pCache.update((e) => e..addAll(localFields));
+
+    // Update pCache with remote fields.
+    final remoteInput = await firestore.read('translations/$languageTag');
+    final remoteFields = _convertRemoteFields(remoteInput);
+    pCache.update((e) => e..addAll(remoteFields));
+
+    // Update local fields with remote fields.
+    _box!.putAll(pCache.value);
+
+    // Return this for chaining.
+    return this;
   }
 
-  final boxFields =
-      box
-          .toMap()
-          .map((key, value) => MapEntry(key?.toString(), value))
-          .nonNulls;
+  static Map<String, String> _convertLocalFields(Map<dynamic, String>? input) {
+    return input?.mapKeys((e) => e.toString()) ?? {};
+  }
 
-  pCache.update((e) => e..addAll(boxFields));
+  static Map<String, String> _convertRemoteFields(Map<String, dynamic>? input) {
+    return input?.mapValues((e) => e?.toString()).nonNullValues ?? {};
+  }
 
-  print(3);
+  final _sequential = SafeSequential();
 
-  const ref = ConfigFileRef(ref: 'config');
+  Future<void> translateAndUpdate(String defaultValue, String key) async {
+    await _sequential.add((_) async {
+      await _translateAndUpdate(defaultValue, key);
+      return const None();
+    }).value;
+  }
+
+  Future<void> _translateAndUpdate(String defaultValue, String key) async {
+    final locale = _currentLocale!;
+    final languageTag = locale.toLanguageTag();
+    final translated = await GoogleTranslator.instance.translate(
+      text: defaultValue,
+      languageCode: locale.languageCode,
+      countryCode: locale.countryCode!,
+      apiKey: 'AIzaSyDBpthU4aw_E4LtzIYeCizVwGk-QnJGTrA',
+    );
+    // final translated = await OpenAITranslator.instance.translate(
+    //   text: defaultValue,
+    //   languageCode: locale.languageCode,
+    //   countryCode: locale.countryCode!,
+    //   apiKey:
+    //       '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',
+    // );
+    //assert(translated != null);
+    if (translated == null) return;
+    pCache.update((e) => e..[key] = translated);
+    assert(_box != null);
+    if (_box == null) return;
+    final f0 = _box!.put(key, translated);
+    final f2 = firestore.patch(
+      documentPath: 'translations/$languageTag',
+      data: {key: translated},
+    );
+    await Future.wait([f0, f2]);
+  }
+}
+
+void main() async {
+  await setupTranslations();
+  runApp(const MyApp());
+}
+
+Future<void> setupTranslations() async {
+  final locale = const Locale('es', 'mx');
+  final manager = await Manager().init(locale);
   final config = FileConfig(
-    ref: ref,
-    mapper: (key) {
-      var value = pCache.value[key];
-      if (value == null) {
-        value = key;
-        print(value);
-        translate(
-          value,
-          locale,
-          'AIzaSyDBpthU4aw_E4LtzIYeCizVwGk-QnJGTrA',
-        ).then((translated) async {
-          if (translated == null) return;
-          print(translated);
-          await firestore.patch('translations/$locale', {key: translated});
-          await box.put(key, translated);
-          pCache.update((e) => e..[key] = translated);
-        });
+    mapper: (textResult) {
+      final textKey = textResult.key;
+      var defaultValue = Manager.pCache.value[textKey];
+      if (defaultValue == null) {
+        defaultValue = textResult.defaultValue;
+        manager.translateAndUpdate(defaultValue, textKey);
       }
-      return value;
+      return defaultValue;
     },
   );
-  TranslationManager.$trFileConfig = config;
-
-  runApp(const MyApp());
+  TranslationManager.config = config;
 }
 
 class MyApp extends StatelessWidget {
@@ -82,176 +117,26 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PodBuilder(
-      pod: pCache,
+      pod: Manager.pCache,
       builder: (context, snapshot) {
         return MaterialApp(
           key: UniqueKey(),
-          home: Scaffold(body: Column(children: [Text('How are you?'.tr())])),
+          home: Scaffold(
+            body: Column(
+              children: [
+                Text(
+                  'How are you {dude}?||eee'.tr(args: {'dude': 'DOOODE MAN'}),
+                ),
+                Text(
+                  'Welcome to this app {displayName}||welcome-message'.tr(
+                    args: {'displayName': 'Robert'},
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
-}
-
-Future<String?> translate(
-  String text,
-  String targetLocale,
-  String apiKey,
-) async {
-  final targetLang = targetLocale.split('-')[0];
-  final url = Uri.parse(
-    'https://translation.googleapis.com/language/translate/v2?key=$apiKey',
-  );
-  final response = await http.post(
-    url,
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({'q': text, 'target': targetLang, 'format': 'text'}),
-  );
-  return jsonDecode(
-        utf8.decode(response.bodyBytes),
-      )?['data']?['translations']?[0]?['translatedText']
-      as String?;
-}
-
-Future<String> login(String email, String password, String apiKey) async {
-  final uri = Uri.https(
-    'identitytoolkit.googleapis.com',
-    '/v1/accounts:signInWithPassword',
-    {'key': apiKey},
-  );
-  final response = await http.post(
-    uri,
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({
-      'email': email,
-      'password': password,
-      'returnSecureToken': true,
-    }),
-  );
-  return jsonDecode(response.body)['idToken'] as String;
-}
-
-class Firestore {
-  final String projectId;
-  final String accessToken;
-  final http.Client _httpClient = http.Client();
-
-  Firestore({required this.projectId, required this.accessToken});
-
-  String _getBaseURL() =>
-      'https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents';
-
-  @pragma('vm:prefer-inline')
-  Map<String, String> get _authHeaders => {
-    'Authorization': 'Bearer $accessToken',
-    'Content-Type': 'application/json',
-  };
-
-  Future<Map<String, dynamic>?> read(String path) async {
-    final url = Uri.parse('${_getBaseURL()}/$path');
-    final response = await _httpClient.get(url, headers: _authHeaders);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final fields = data['fields'] as Map<String, dynamic>?;
-      if (fields != null) {
-        return convertToLocalJson(fields);
-      }
-    }
-    return null;
-  }
-
-  Future<void> write(
-    String collection,
-    String documentId,
-    Map<String, dynamic> data,
-  ) async {
-    final url = Uri.parse(
-      '${_getBaseURL()}/$collection?documentId=$documentId',
-    );
-    await _httpClient.post(
-      url,
-      headers: _authHeaders,
-      body: jsonEncode({'fields': convertToFirestoreJson(data)}),
-    );
-  }
-
-  Future<void> patch(String path, Map<String, dynamic> data) async {
-    final updateMask = data.keys
-        .map((key) => 'updateMask.fieldPaths=$key')
-        .join('&');
-    final url = Uri.parse('${_getBaseURL()}/$path?$updateMask');
-    await _httpClient.patch(
-      url,
-      headers: _authHeaders,
-      body: jsonEncode({'fields': convertToFirestoreJson(data)}),
-    );
-  }
-}
-
-Map<String, dynamic> convertToLocalJson(Map<String, dynamic> firestoreJson) {
-  final result = <String, dynamic>{};
-  firestoreJson.forEach((key, value) {
-    result[key] = convertToLocalValue(value);
-  });
-  return result;
-}
-
-dynamic convertToLocalValue(dynamic value) {
-  if (value is Map) {
-    if (value.containsKey('mapValue')) {
-      return convertToLocalJson(
-        value['mapValue']['fields'] as Map<String, dynamic>,
-      );
-    } else if (value.containsKey('arrayValue')) {
-      return (value['arrayValue']['values'])
-          .map((dynamic e) => convertToLocalValue(e))
-          .toList();
-    } else if (value.containsKey('stringValue')) {
-      return value['stringValue'];
-    } else if (value.containsKey('integerValue')) {
-      return int.parse(value['integerValue'] as String);
-    } else if (value.containsKey('doubleValue')) {
-      return double.parse(value['doubleValue'] as String);
-    } else if (value.containsKey('booleanValue')) {
-      return value['booleanValue'] == true;
-    } else if (value.containsKey('timestampValue')) {
-      return DateTime.parse(value['timestampValue'] as String);
-    } else if (value.containsKey('nullValue')) {
-      return null;
-    }
-  }
-  throw UnsupportedError('Unsupported value: $value');
-}
-
-Map<String, dynamic> convertToFirestoreJson(Map<String, dynamic> localJson) {
-  final result = <String, dynamic>{};
-  localJson.forEach((key, value) {
-    result[key] = convertToFirestoreValue(value);
-  });
-  return result;
-}
-
-Map<String, dynamic> convertToFirestoreValue(dynamic value) {
-  if (value == null) {
-    return {'nullValue': null};
-  } else if (value is String) {
-    return {'stringValue': value};
-  } else if (value is int) {
-    return {'integerValue': value.toString()};
-  } else if (value is double) {
-    return {'doubleValue': value.toString()};
-  } else if (value is bool) {
-    return {'booleanValue': value};
-  } else if (value is DateTime) {
-    return {'timestampValue': value.toIso8601String()};
-  } else if (value is List<dynamic>) {
-    return {
-      'arrayValue': {'values': value.map(convertToFirestoreValue).toList()},
-    };
-  } else if (value is Map<String, dynamic>) {
-    return {
-      'mapValue': {'fields': convertToFirestoreJson(value)},
-    };
-  }
-  throw UnsupportedError('Unsupported value type: ${value.runtimeType}');
 }

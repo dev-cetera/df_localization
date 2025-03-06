@@ -14,11 +14,10 @@ class OpenAITranslator {
   Future<String?> translate({
     required String text,
     required String languageCode,
-    required String countryCode,
+    required String? countryCode,
     required String apiKey,
     String baseUrl = 'https://api.openai.com/v1',
     String model = 'gpt-3.5-turbo',
-    Iterable<String> historyContent = const [],
     String systemInstruction =
         'You are an app localization translator. You do not translate anything inside handlebars {{ }} or { } as these are parts that will be replaced in code. You do not respond with any additional information other than the translation.',
   }) async {
@@ -30,12 +29,14 @@ class OpenAITranslator {
     final body = jsonEncode({
       'model': model,
       'messages': [
-        {'role': 'system', 'content': systemInstruction},
-        ...historyContent.map((e) => {'role': 'user', 'content': e}),
+        {
+          'role': 'system',
+          'content': systemInstruction,
+        },
         {
           'role': 'user',
           'content':
-              'Translate the following text to the language "$languageCode" with a strong focus on the country "$countryCode", ensuring the translation fully reflects the specific linguistic and cultural norms of that country: "$text"',
+              'Translate the following text to the language identified by the locale code "$languageCode"${countryCode != null ? 'with a strong focus on the country identified by the country code "$countryCode", ensuring the translation fully reflects the specific linguistic and cultural norms of that country' : ''}: "$text"',
         },
       ],
       'temperature': 0.7,

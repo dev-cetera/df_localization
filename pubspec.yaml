@@ -41,6 +41,7 @@ dependencies:
   df_pod: ^0.16.6
   http:
   df_safer_dart:
+  shared_preferences:
 
   args: ^2.6.0
   google_generative_ai: ^0.4.6

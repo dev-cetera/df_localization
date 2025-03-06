@@ -14,7 +14,7 @@ class GoogleTranslator {
   Future<String?> translate({
     required String text,
     required String languageCode,
-    required String countryCode,
+    required String? countryCode,
     required String apiKey,
   }) async {
     final url = Uri.parse(

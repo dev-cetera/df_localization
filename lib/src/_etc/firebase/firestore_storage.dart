@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'convert_to_firestore.dart';
 import 'convert_to_local.dart';
 
-class Firestore {
+class FirestoreStorage {
   //
   //
   //
@@ -17,7 +17,7 @@ class Firestore {
   //
   //
 
-  Firestore({
+  FirestoreStorage({
     required this.projectId,
     this.accessToken,
   });
@@ -44,16 +44,21 @@ class Firestore {
   //
 
   Future<Map<String, dynamic>?> read(String path) async {
-    final url = Uri.parse('${_getBaseURL()}/$path');
-    final response = await _httpClient.get(url, headers: _authHeaders);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final fields = data['fields'] as Map<String, dynamic>?;
-      if (fields != null) {
-        return convertToLocalJson(fields);
+    try {
+      final url = Uri.parse('${_getBaseURL()}/$path');
+      final response = await _httpClient.get(url, headers: _authHeaders);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final fields = data['fields'] as Map<String, dynamic>?;
+        if (fields != null) {
+          return convertToLocalJson(fields);
+        }
       }
+      return null;
+    } catch (e) {
+      print('ERROR: $e');
+      return null;
     }
-    return null;
   }
 
   //
@@ -66,7 +71,7 @@ class Firestore {
     required Map<String, dynamic> data,
   }) async {
     final url = Uri.parse(
-      '${_getBaseURL()}/$collectionPath?documentId=$documentId',
+      '${_getBaseURL()}/$collectionPath?documentId="$documentId"',
     );
     await _httpClient.post(
       url,
@@ -79,17 +84,18 @@ class Firestore {
   //
   //
 
-  Future<void> patch({
+  Future<http.Response> patch({
     required String documentPath,
     required Map<String, dynamic> data,
   }) async {
     final updateMask =
         data.keys.map((key) => 'updateMask.fieldPaths=$key').join('&');
     final url = Uri.parse('${_getBaseURL()}/$documentPath?$updateMask');
-    await _httpClient.patch(
+    final response = await _httpClient.patch(
       url,
       headers: _authHeaders,
       body: jsonEncode({'fields': convertToFirestoreJson(data)}),
     );
+    return response;
   }
 }

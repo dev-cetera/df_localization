@@ -4,103 +4,152 @@ import 'package:df_localization/src/_etc/_etc.g.dart';
 import 'package:df_pod/df_pod.dart';
 import 'package:df_safer_dart/df_safer_dart.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+Locale getCurrentLocale() {
+  final locales = WidgetsBinding.instance.platformDispatcher.locales;
+  return locales.first;
+}
 
 class Manager {
   Manager();
 
-  Box<String>? _box;
+  final remoteStorage = FirestoreStorage(projectId: 'langchapp');
+  final cachedStorage = PersistentStorage();
 
-  final firestore = Firestore(projectId: 'langchapp');
-
-  static final pCache = Pod<Map<String, String>>({});
+  static final pCache = Pod<Map<String, Map<String, String>>>({});
 
   Locale? _currentLocale;
 
-  Future<Manager> init(Locale locale) async {
-    await _sequential.last.value;
-    pCache.set({});
-    _box?.close();
-    _box = null;
-    _currentLocale = locale;
-    final languageTag = locale.toLanguageTag();
+  final _initialInitCompleter = Completer<void>();
 
-    // Update pCache with local fields.
-    _box = await Hive.openBox<String>(languageTag);
-    final localFields = _convertLocalFields(_box!.toMap());
-    pCache.update((e) => e..addAll(localFields));
-
-    // Update pCache with remote fields.
-    final remoteInput = await firestore.read('translations/$languageTag');
-    final remoteFields = _convertRemoteFields(remoteInput);
-    pCache.update((e) => e..addAll(remoteFields));
-
-    // Update local fields with remote fields.
-    _box!.putAll(pCache.value);
-
-    // Return this for chaining.
-    return this;
+  Future<void> loadRemoteTranslations(Locale locale) async {
+    await _sequential.add((_) async {
+      try {
+        await _loadRemoteTranslations(locale);
+      } catch (_) {}
+      if (!_initialInitCompleter.isCompleted) {
+        _initialInitCompleter.complete();
+      }
+      return const None();
+    }).value;
   }
 
-  static Map<String, String> _convertLocalFields(Map<dynamic, String>? input) {
-    return input?.mapKeys((e) => e.toString()) ?? {};
+  Future<bool> loadCachedTranslations(Locale locale) async {
+    try {
+      _currentLocale = locale;
+      final languageTag = locale.toLanguageTag().toLowerCase();
+      final input = await cachedStorage.read('translations/$languageTag');
+      if (input == null) return false;
+      final fields = _convertFields(input);
+      print('CACHED FIELDS: $fields');
+      pCache.update((e) => e..addAll(fields));
+      return true;
+    } catch (e) {
+      print('ERROR: $e');
+      return false;
+    }
   }
 
-  static Map<String, String> _convertRemoteFields(Map<String, dynamic>? input) {
-    return input?.mapValues((e) => e?.toString()).nonNullValues ?? {};
+  Future<void> _loadRemoteTranslations(Locale locale) async {
+    try {
+      _currentLocale = locale;
+      final languageTag = locale.toLanguageTag().toLowerCase();
+      final input = await remoteStorage.read('translations/$languageTag');
+      print('TEST? $input');
+      if (input == null) return;
+      final fields = _convertFields(input);
+      print('REMOTE FIELDS: $fields');
+      pCache.update((e) => e..addAll(fields));
+      /*await*/
+      cachedStorage.write(
+        collectionPath: 'translations',
+        documentId: languageTag,
+        data: pCache.value,
+      );
+    } catch (e) {
+      print('ERROR: $e');
+    }
+  }
+
+  static Map<String, Map<String, String>> _convertFields(
+    Map<String, dynamic>? input,
+  ) {
+    return input?.mapValues((e) => (e as Map).cast()) ?? {};
   }
 
   final _sequential = SafeSequential();
 
   Future<void> translateAndUpdate(String defaultValue, String key) async {
     await _sequential.add((_) async {
+      await _initialInitCompleter.future;
+      // final test = Manager.pCache.value[key]?['to']?.toString();
+      // if (test == null) {
       await _translateAndUpdate(defaultValue, key);
+      //}
       return const None();
     }).value;
   }
 
   Future<void> _translateAndUpdate(String defaultValue, String key) async {
     final locale = _currentLocale!;
-    final languageTag = locale.toLanguageTag();
+    final languageTag = locale.toLanguageTag().toLowerCase();
+    print("TRANSLATING!!!");
     final translated = await GoogleTranslator.instance.translate(
       text: defaultValue,
       languageCode: locale.languageCode,
-      countryCode: locale.countryCode!,
+      countryCode: locale.countryCode,
       apiKey: 'AIzaSyDBpthU4aw_E4LtzIYeCizVwGk-QnJGTrA',
     );
     // final translated = await OpenAITranslator.instance.translate(
     //   text: defaultValue,
     //   languageCode: locale.languageCode,
-    //   countryCode: locale.countryCode!,
+    //   countryCode: locale.countryCode,
     //   apiKey:
     //       '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',
     // );
-    //assert(translated != null);
     if (translated == null) return;
-    pCache.update((e) => e..[key] = translated);
-    assert(_box != null);
-    if (_box == null) return;
-    final f0 = _box!.put(key, translated);
-    final f2 = firestore.patch(
+    //print('TRANSLATED: $translated');
+    pCache.update((e) => e..[key] = {'from': defaultValue, 'to': translated});
+    //print('TO LOCAL: $languageTag');
+    final f1 = cachedStorage.patch(
       documentPath: 'translations/$languageTag',
-      data: {key: translated},
+      data: {
+        key: {'from': defaultValue, 'to': translated},
+      },
     );
-    await Future.wait([f0, f2]);
+    //print('TO REMOTE: $languageTag');
+
+    final f2 = remoteStorage.patch(
+      documentPath: 'translations/$languageTag',
+      data: {
+        key: {'from': defaultValue, 'to': translated},
+      },
+    );
+
+    await Future.wait([f1, f2]);
   }
 }
 
-void main() async {
-  await setupTranslations();
-  runApp(const MyApp());
-}
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-Future<void> setupTranslations() async {
-  final locale = const Locale('es', 'mx');
-  final manager = await Manager().init(locale);
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  //final locale = const Locale('es', 'mx');
+  final locale = getCurrentLocale();
+  final manager = Manager();
+
+  final didLoad = await manager.loadCachedTranslations(locale);
+  final f = manager.loadRemoteTranslations(locale);
+  if (!didLoad) {
+    await f;
+  }
+
   final config = FileConfig(
     mapper: (textResult) {
       final textKey = textResult.key;
-      var defaultValue = Manager.pCache.value[textKey];
+      var defaultValue = Manager.pCache.value[textKey]?['to']?.toString();
       if (defaultValue == null) {
         defaultValue = textResult.defaultValue;
         manager.translateAndUpdate(defaultValue, textKey);
@@ -109,6 +158,8 @@ Future<void> setupTranslations() async {
     },
   );
   TranslationManager.config = config;
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -125,10 +176,12 @@ class MyApp extends StatelessWidget {
             body: Column(
               children: [
                 Text(
-                  'How are you {dude}?||eee'.tr(args: {'dude': 'DOOODE MAN'}),
+                  'How are you {displayName}?||how_are_you'.tr(
+                    args: {'displayName': 'Robert'},
+                  ),
                 ),
                 Text(
-                  'Welcome to this app {displayName}||welcome-message'.tr(
+                  'Welcome to this app {displayName}||welcome_message'.tr(
                     args: {'displayName': 'Robert'},
                   ),
                 ),

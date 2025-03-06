@@ -5,6 +5,8 @@ import 'package:df_pod/df_pod.dart';
 import 'package:df_safer_dart/df_safer_dart.dart';
 import 'package:flutter/material.dart';
 
+import 'api_keys.dart';
+
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 Locale getCurrentLocale() {
@@ -100,14 +102,13 @@ class Manager {
       text: defaultValue,
       languageCode: locale.languageCode,
       countryCode: locale.countryCode,
-      apiKey: 'AIzaSyDBpthU4aw_E4LtzIYeCizVwGk-QnJGTrA',
+      apiKey: GOOGLE_TRANSLATE_API_KEY,
     );
     // final translated = await OpenAITranslator.instance.translate(
     //   text: defaultValue,
     //   languageCode: locale.languageCode,
     //   countryCode: locale.countryCode,
-    //   apiKey:
-    //       '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',
+    //   apiKey: OPENAI_TRANSLATE_API_KEY,
     // );
     if (translated == null) return;
     //print('TRANSLATED: $translated');

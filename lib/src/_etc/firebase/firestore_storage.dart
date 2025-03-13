@@ -43,7 +43,10 @@ class FirestoreStorage {
   //
   //
 
-  Future<Map<String, dynamic>?> read(String path) async {
+  Future<Map<String, dynamic>?> readOrNull(
+    String path, {
+    void Function(dynamic e)? onError,
+  }) async {
     try {
       final url = Uri.parse('${_getBaseURL()}/$path');
       final response = await _httpClient.get(url, headers: _authHeaders);
@@ -56,7 +59,7 @@ class FirestoreStorage {
       }
       return null;
     } catch (e) {
-      print('ERROR: $e');
+      onError?.call(e);
       return null;
     }
   }
@@ -70,6 +73,8 @@ class FirestoreStorage {
     required String documentId,
     required Map<String, dynamic> data,
   }) async {
+    final segments = collectionPath.split('/');
+
     final url = Uri.parse(
       '${_getBaseURL()}/$collectionPath?documentId="$documentId"',
     );

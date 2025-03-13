@@ -58,7 +58,7 @@ class Manager {
     try {
       _currentLocale = locale;
       final languageTag = locale.toLanguageTag().toLowerCase();
-      final input = await remoteStorage.read('translations/$languageTag');
+      final input = await remoteStorage.readOrNull('translations/$languageTag');
       print('TEST? $input');
       if (input == null) return;
       final fields = _convertFields(input);

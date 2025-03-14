@@ -12,6 +12,8 @@
 
 import 'dart:ui' show Locale;
 
+import 'package:flutter/widgets.dart';
+
 import '/_common.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -29,9 +31,46 @@ class AutoTranslationManager<
   final TCachedDatabaseInterface cachedDatabaseBroker;
   final TTranslationInterface translationBroker;
 
-  static final pCache = Pod<Map<String, TranslatedText>>({});
+  static final _pCache = Pod<Map<String, TranslatedText>>({});
+  static GenericPod<Map<String, TranslatedText>> get pCache => _pCache;
 
-  Locale? _currentLocale;
+  static const _CACHE_KEY = 'locale';
+
+  SharedPod<Locale, String>? _pLocale;
+  GenericPod<Locale> get pLocale => _pLocale!.map((e) => e!);
+
+  Locale get currentLocale => _pLocale!.value!;
+
+  Future<void> _initLocalePod() async {
+    if (_pLocale != null) return;
+    final fallbackLocale = primaryLocale(WidgetsBinding.instance);
+    _pLocale = SharedPod<Locale, String>(
+      _CACHE_KEY,
+      fromValue: (localeString) async {
+        final locale = () {
+          if (localeString == null || localeString.isEmpty) {
+            return fallbackLocale;
+          }
+          final parts = localeString.split('-');
+          if (parts.length == 1) {
+            final languageCode = parts[0];
+            return Locale(languageCode);
+          } else {
+            final languageCode = parts.sublist(0, parts.length - 1).join('-');
+            final countryCode = parts.last;
+            return Locale(languageCode, countryCode);
+          }
+        }();
+        return locale;
+      },
+      toValue: (locale) async {
+        final languageTag = (locale ?? fallbackLocale).toLanguageTag().toLowerCase();
+        return languageTag;
+      },
+      initialValue: fallbackLocale,
+    );
+    await _pLocale!.refresh();
+  }
 
   final _initialInitCompleter = Completer<void>();
 
@@ -64,6 +103,7 @@ class AutoTranslationManager<
 
   static AutoTranslationManager<FirestoreDatabseBroker, PersistentDatabaseBroker,
       GoogleTranslatorBroker> useFirestoreAndGoogleTranslator({
+    String translationPath = 'translations',
     required String projectId,
     String? firestoreAccessToken,
     required String googleTranslateApiKey,
@@ -76,6 +116,7 @@ class AutoTranslationManager<
       apiKey: googleTranslateApiKey,
     );
     return AutoTranslationManager(
+      translationPath: translationPath,
       remoteDatabaseBroker: remoteDatabaseBroker,
       cachedDatabaseBroker: const PersistentDatabaseBroker(),
       translationBroker: translationBroker,
@@ -86,9 +127,20 @@ class AutoTranslationManager<
   //
   //
 
-  Future<void> setLocale(Locale locale) async {
-    final a = await loadCachedTranslations(locale);
-    final b = loadRemoteTranslations(locale);
+  Future<void> init() => setLocale(null);
+
+  //
+  //
+  //
+
+  Future<void> setLocale(Locale? locale) async {
+    await _initLocalePod();
+    if (locale != null) {
+      await _pLocale!.set(locale);
+    }
+    AutoTranslationManager._pCache.update((e) => e..clear());
+    final a = await loadCachedTranslations(currentLocale);
+    final b = loadRemoteTranslations(currentLocale);
     // Wait for the remote translations to load before continuing if the cached
     // translations are not available.
     if (!a) {
@@ -99,7 +151,7 @@ class AutoTranslationManager<
         final textKey = textResult.key;
         String defaultValue;
         try {
-          defaultValue = AutoTranslationManager.pCache.value[textKey]!.to;
+          defaultValue = AutoTranslationManager._pCache.value[textKey]!.to;
         } catch (_) {
           // fail!
           defaultValue = textResult.defaultValue;
@@ -138,12 +190,11 @@ class AutoTranslationManager<
 
   Future<bool> _loadRemoteTranslations(Locale locale) async {
     try {
-      _currentLocale = locale;
       final languageTag = locale.toLanguageTag().toLowerCase();
       final input = await remoteDatabaseBroker.read('$translationPath/$languageTag').value;
       if (input.isErr()) return false;
       final fields = _castFields(input.unwrap());
-      pCache.update((e) => e..addAll(fields));
+      _pCache.update((e) => e..addAll(fields));
       await _saveCache();
       return true;
     } catch (_) {
@@ -157,11 +208,11 @@ class AutoTranslationManager<
   //
 
   Future<void> _saveCache() async {
-    final languageTag = _currentLocale!.toLanguageTag().toLowerCase();
+    final languageTag = currentLocale.toLanguageTag().toLowerCase();
     final result = await cachedDatabaseBroker
         .write(
           path: '$translationPath/$languageTag',
-          data: pCache.value,
+          data: _pCache.value,
         )
         .value;
     if (result.isErr()) {
@@ -175,12 +226,11 @@ class AutoTranslationManager<
 
   Future<bool> loadCachedTranslations(Locale locale) async {
     try {
-      _currentLocale = locale;
       final languageTag = locale.toLanguageTag().toLowerCase();
       final input = await cachedDatabaseBroker.read('$translationPath/$languageTag').value;
       if (input.isErr()) return false;
       final fields = _castFields(input.unwrap());
-      pCache.update((e) => e..addAll(fields));
+      _pCache.update((e) => e..addAll(fields));
       return true;
     } catch (_) {
       // fail!
@@ -195,7 +245,7 @@ class AutoTranslationManager<
   Future<void> translateAndUpdate(String defaultValue, String key) async {
     await _sequential.add((_) async {
       await _initialInitCompleter.future;
-      final test = AutoTranslationManager.pCache.value[key]?.to;
+      final test = AutoTranslationManager._pCache.value[key]?.to;
       //if (test == null) {
       await _translateAndUpdate(defaultValue, key);
       //}
@@ -210,18 +260,17 @@ class AutoTranslationManager<
   Future<void> _translateAndUpdate(String defaultValue, String key) async {
     if (_didRequestTranslate.contains(key)) return;
     _didRequestTranslate.add(key);
-    final locale = _currentLocale!;
-    final languageTag = locale.toLanguageTag().toLowerCase();
+    final languageTag = currentLocale.toLanguageTag().toLowerCase();
     final translated = await translationBroker
         .translate(
           text: defaultValue,
-          languageCode: locale.languageCode,
-          countryCode: locale.countryCode,
+          languageCode: currentLocale.languageCode,
+          countryCode: currentLocale.countryCode,
         )
         .value;
     if (translated.isErr()) return;
     //print('TRANSLATED: $translated');
-    pCache.update(
+    _pCache.update(
       (e) => e
         ..[key] = TranslatedText(
           to: translated.unwrap(),

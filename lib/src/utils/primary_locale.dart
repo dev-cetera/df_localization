@@ -10,11 +10,11 @@
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //.title~
 
-/// A package that provides an easy way to add localization to your Flutter app.
-library;
+import 'package:flutter/widgets.dart' show Locale, WidgetsBinding;
 
-export 'src/_src.g.dart';
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-export 'package:df_config/df_config.dart';
-export 'package:df_pod/df_pod.dart';
-export 'package:df_safer_dart/df_safer_dart.dart';
+Locale primaryLocale(WidgetsBinding widgetsBinding) {
+  final locales = widgetsBinding.platformDispatcher.locales;
+  return locales.first;
+}

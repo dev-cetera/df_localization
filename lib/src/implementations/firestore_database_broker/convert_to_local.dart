@@ -1,3 +1,15 @@
+//.title
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//
+// Dart/Flutter (DF) Packages by dev-cetera.com & contributors. The use of this
+// source code is governed by an MIT-style license described in the LICENSE
+// file located in this project's root directory.
+//
+// See: https://opensource.org/license/mit
+//
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//.title~
+
 Map<String, dynamic> convertToLocalJson(Map<String, dynamic> firestoreJson) {
   final result = <String, dynamic>{};
   firestoreJson.forEach((key, value) {
@@ -6,6 +18,8 @@ Map<String, dynamic> convertToLocalJson(Map<String, dynamic> firestoreJson) {
   return result;
 }
 
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
 dynamic convertToLocalValue(dynamic value) {
   if (value is Map) {
     if (value.containsKey('mapValue')) {
@@ -13,9 +27,7 @@ dynamic convertToLocalValue(dynamic value) {
         value['mapValue']['fields'] as Map<String, dynamic>,
       );
     } else if (value.containsKey('arrayValue')) {
-      return (value['arrayValue']['values'])
-          .map((dynamic e) => convertToLocalValue(e))
-          .toList();
+      return (value['arrayValue']['values']).map((dynamic e) => convertToLocalValue(e)).toList();
     } else if (value.containsKey('stringValue')) {
       return value['stringValue'];
     } else if (value.containsKey('integerValue')) {

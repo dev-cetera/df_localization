@@ -12,6 +12,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:df_localization/df_localization.dart';
 import 'package:df_log/df_log.dart';
 import 'package:path/path.dart' as p;
 import 'package:args/args.dart';
@@ -23,49 +24,46 @@ void main(List<String> arguments) async {
   DebugLog.debugOnly = false;
   printBlue('Starting generator. Please wait...');
   // Get the arguments.
-  final parser =
-      ArgParser()
-        ..addFlag(
-          'help',
-          abbr: 'h',
-          negatable: false,
-          help: 'Show this help message.',
-        )
-        ..addOption(
-          'root',
-          abbr: 'r',
-          help: 'Root directory to search for translation keys.',
-          defaultsTo: Directory.current.path,
-        )
-        ..addOption(
-          'gemeni_api_key',
-          help:
-              'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
-        )
-        ..addOption(
-          'gemeni_model',
-          help: 'The Gemeni LLM to use.',
-          defaultsTo: 'gemini-1.5-flash-latest',
-        )
-        ..addOption(
-          'locale',
-          abbr: 'l',
-          help: 'Specify your locale or language, e.g. "en-us" or "English"',
-          defaultsTo: 'en-us',
-        )
-        ..addOption(
-          'output',
-          abbr: 'o',
-          help: 'Output directory path for the generated translation JSON.',
-          defaultsTo: Directory.current.path,
-        )
-        ..addOption(
-          'type',
-          abbr: 't',
-          help:
-              'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
-          defaultsTo: 'yaml',
-        );
+  final parser = ArgParser()
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Show this help message.',
+    )
+    ..addOption(
+      'root',
+      abbr: 'r',
+      help: 'Root directory to search for translation keys.',
+      defaultsTo: Directory.current.path,
+    )
+    ..addOption(
+      'api_key',
+      //help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
+    )
+    ..addOption(
+      'gemeni_model',
+      help: 'The Gemeni LLM to use.',
+      defaultsTo: 'gemini-1.5-flash-latest',
+    )
+    ..addOption(
+      'locale',
+      abbr: 'l',
+      help: 'Specify your locale or language, e.g. "en-us" or "English"',
+      defaultsTo: 'en-us',
+    )
+    ..addOption(
+      'output',
+      abbr: 'o',
+      help: 'Output directory path for the generated translation JSON.',
+      defaultsTo: Directory.current.path,
+    )
+    ..addOption(
+      'type',
+      abbr: 't',
+      help: 'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
+      defaultsTo: 'yaml',
+    );
 
   final argResults = parser.parse(arguments);
 
@@ -76,7 +74,7 @@ void main(List<String> arguments) async {
   }
 
   final rootPath = argResults['root']!.toString().trim();
-  final gemeniApiKey = argResults['gemeni_api_key']?.toString().trim();
+  final apiKey = argResults['api_key']?.toString().trim();
   final gemeniModel = argResults['gemeni_model']!.toString().trim();
   final locale = argResults['locale']!.toString().trim();
   final type = argResults['type']!.toString().toLowerCase().trim();
@@ -127,8 +125,7 @@ void main(List<String> arguments) async {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File &&
-          systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // See: regexr.com/86id8
         final regex = RegExp(
@@ -136,8 +133,7 @@ void main(List<String> arguments) async {
         );
         for (final match in regex.allMatches(content)) {
           final key = (match.group(2) ?? 'key_${pairs.length}');
-          final value =
-              match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
+          final value = match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
           final keyOrExisting = pairs.keys.firstWhere(
             (k) => k.toLowerCase() == key.toLowerCase(),
             orElse: () => key,
@@ -157,9 +153,7 @@ void main(List<String> arguments) async {
 
   // Collect all keys and add them to the translationMap.
   final translationMap = <String, dynamic>{};
-  final pairs =
-      collectPairs(rootPath).entries.toList()
-        ..sort((a, b) => a.key.compareTo(b.key));
+  final pairs = collectPairs(rootPath).entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   for (final pair in pairs) {
     insertPairIntoMap(translationMap, pair);
   }
@@ -183,15 +177,14 @@ void main(List<String> arguments) async {
   Map<String, dynamic> checked;
   try {
     final input = const JsonEncoder.withIndent('  ').convert(translationMap);
-    final transalted =
-        gemeniApiKey != null
-            ? await translateWithGemeni(
-              data: input,
-              gemeniApiKey: gemeniApiKey,
-              gemeniModel: gemeniModel,
-              locale: locale,
-            )
-            : input;
+    final transalted = apiKey != null
+        ? await translateWithGemeni(
+            data: input,
+            apiKey: apiKey,
+            //gemeniModel: gemeniModel,
+            locale: locale,
+          )
+        : input;
 
     checked = (jsonDecode(transalted) as Map).cast<String, dynamic>();
   } catch (e) {
@@ -242,19 +235,33 @@ String mapToYaml(Map<String, dynamic> map, {int indent = 0}) {
 /// Translate [data] to [locale] using Gemeni.
 Future<String> translateWithGemeni({
   required String data,
-  required String gemeniApiKey,
-  required String gemeniModel,
+  required String apiKey,
+  //required String gemeniModel,
   required String locale,
 }) async {
-  final model = GenerativeModel(model: gemeniModel, apiKey: gemeniApiKey);
+  final parts = locale.split('-');
+  final languageCode = parts.first;
+  final countryCode = parts.length > 1 ? parts.last : null;
+  final translator = GoogleTranslatorBroker(apiKey: apiKey);
 
-  final content = [
-    Content.text('Translate the following JSON translation file into $locale:'),
-    Content.text(data),
-  ];
+  final result = await translator
+      .translate(
+        text: data,
+        languageCode: languageCode,
+        countryCode: countryCode,
+      )
+      .value;
 
-  final response = await model.generateContent(content);
-  var text = response.text!.trim();
+  // OLD CODE:
+  // final model = GenerativeModel(model: gemeniModel, apiKey: gemeniApiKey);
+  // final content = [
+  //   Content.text('Translate the following JSON translation file into $locale:'),
+  //   Content.text(data),
+  // ];
+  // final response = await model.generateContent(content);
+  // var text = response.text!.trim();
+
+  var text = result.unwrap();
 
   // Remove any markdown code block wrapping.
   if (text.startsWith('```')) {

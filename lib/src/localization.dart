@@ -12,8 +12,7 @@
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/widgets.dart' show Locale;
-
-import 'package:df_config/df_config.dart';
+import 'package:df_config/df_config.dart' show TranslationFileReader;
 import 'package:df_pod/df_pod.dart' show SharedPod;
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -33,7 +32,7 @@ final class Localization {
   );
 
   static const _FALLBACK_LOCALE = Locale('en', 'US');
-  static const _CACHE_KEY = '<Localization.pLocale>';
+  static const _CACHE_KEY = 'locale';
 
   static final pLocale = SharedPod<Locale, String>(
     _CACHE_KEY,
@@ -57,18 +56,17 @@ final class Localization {
       try {
         await _reader.read(languageTag);
       } catch (e) {
-        // todo: handle error
+        assert(false, 'Failed to read translations for $locale: $e');
       }
 
       return locale;
     },
     toValue: (locale) async {
-      final languageTag =
-          (locale ?? _FALLBACK_LOCALE).toLanguageTag().toLowerCase();
+      final languageTag = (locale ?? _FALLBACK_LOCALE).toLanguageTag().toLowerCase();
       try {
         await _reader.read(languageTag);
       } catch (e) {
-        // todo: handle error
+        assert(false, 'Failed to read translations for $locale: $e');
       }
 
       return languageTag;

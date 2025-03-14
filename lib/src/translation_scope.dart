@@ -22,8 +22,8 @@ class TranslationScope extends StatefulWidget {
   //
 
   final TranslationController controller;
-  final ValueWidgetBuilder<Locale?>? builder;
-  final ValueWidgetBuilder<Locale>? initializingBuilder;
+  final ValueWidgetBuilder<Map<String, TranslatedText>?>? builder;
+  final ValueWidgetBuilder<Map<String, TranslatedText>>? initializingBuilder;
   final bool initialize;
   final Widget? child;
 
@@ -63,7 +63,7 @@ class _TranslationScopeState extends State<TranslationScope> {
   //
   //
 
-  late final Future<ValueListenable<Locale>> _pLocale;
+  late final Future<ValueListenable<Map<String, TranslatedText>>> _pCache;
 
   //
   //
@@ -71,7 +71,9 @@ class _TranslationScopeState extends State<TranslationScope> {
 
   @override
   void initState() {
-    _pLocale = widget.controller.init().then((e) => widget.controller.pLocale);
+    _pCache = widget.controller.init().then((e) {
+      return widget.controller.pCache;
+    });
     super.initState();
   }
 
@@ -82,15 +84,17 @@ class _TranslationScopeState extends State<TranslationScope> {
   @override
   Widget build(BuildContext context) {
     final podBuilder = PodBuilder(
-      pod: _pLocale,
+      pod: _pCache,
       builder: (context, snapshot) {
-        return widget.builder?.call(
-              context,
-              snapshot.value,
+        return SizedBox(
+          key: UniqueKey(),
+          child: widget.builder?.call(
+                context,
+                snapshot.value,
+                snapshot.child,
+              ) ??
               snapshot.child,
-            ) ??
-            snapshot.child ??
-            const SizedBox();
+        );
       },
       child: widget.child,
     );

@@ -37,8 +37,6 @@ class TranslationController<
   ValueListenable<Locale> get pLocale => _pLocale!.map((e) => e!);
   Locale get locale => _pLocale!.value!;
 
-  final _initialInitCompleter = Completer<void>();
-
   final _didRequestTranslate = <String>{};
 
   final _sequential = SafeSequential();
@@ -59,34 +57,6 @@ class TranslationController<
   //
   //
 
-  static TranslationController<FirestoreDatabseBroker, PersistentDatabaseBroker,
-      GoogleTranslatorBroker> useFirestoreAndGoogleTranslator({
-    required String projectId,
-    String? firestoreAccessToken,
-    required String googleTranslateApiKey,
-    String translationPath = 'translations',
-    String cacheKey = 'locale',
-  }) {
-    final remoteDatabaseBroker = FirestoreDatabseBroker(
-      projectId: projectId,
-      accessToken: firestoreAccessToken,
-    );
-    final translationBroker = GoogleTranslatorBroker(
-      apiKey: googleTranslateApiKey,
-    );
-    return TranslationController(
-      remoteDatabaseBroker: remoteDatabaseBroker,
-      cachedDatabaseBroker: const PersistentDatabaseBroker(),
-      translationBroker: translationBroker,
-      translationPath: translationPath,
-      cacheKey: cacheKey,
-    );
-  }
-
-  //
-  //
-  //
-
   bool _didInit = false;
 
   Future<void> init() async {
@@ -99,15 +69,16 @@ class TranslationController<
   //
 
   Future<void> setLocale(Locale? locale) async {
+    _didRequestTranslate.clear();
     await _initLocalePod();
     if (locale != null) {
       await _pLocale!.set(locale);
     }
-    _pCache.update((e) => e..clear());
+    _pCache.set({});
     final a = await loadCachedTranslations(this.locale);
     final b = loadRemoteTranslations(this.locale);
-    // Wait for the remote translations to load before continuing if the cached
-    // translations are not available.
+    // If cached translations are not available. wait for the remote]
+    // translations to load.
     if (!a) {
       await b;
     }
@@ -142,12 +113,12 @@ class TranslationController<
   Future<bool> loadRemoteTranslations(Locale locale) async {
     var success = false;
     await _sequential.add((_) async {
-      try {
-        success = await _loadRemoteTranslations(locale);
-      } catch (_) {}
-      if (!_initialInitCompleter.isCompleted) {
-        _initialInitCompleter.complete();
+      success = await _loadRemoteTranslations(locale);
+      if (!success) {
+        // _pCache.set({});
+        // await _saveCache();
       }
+
       return const None();
     }).value;
     if (!success) {
@@ -166,11 +137,10 @@ class TranslationController<
       final input = await remoteDatabaseBroker.read('$translationPath/$languageTag').value;
       if (input.isErr()) return false;
       final fields = TranslatedText._castFields(input.unwrap());
-      _pCache.update((e) => e..addAll(fields));
+      _pCache.set(fields);
       await _saveCache();
       return true;
     } catch (_) {
-      // fail!
       return false;
     }
   }
@@ -202,7 +172,7 @@ class TranslationController<
       final input = await cachedDatabaseBroker.read('$translationPath/$languageTag').value;
       if (input.isErr()) return false;
       final fields = TranslatedText._castFields(input.unwrap());
-      _pCache.update((e) => e..addAll(fields));
+      _pCache.set(fields);
       return true;
     } catch (_) {
       // fail!
@@ -216,7 +186,6 @@ class TranslationController<
 
   Future<void> translateAndUpdate(String defaultValue, String key) async {
     await _sequential.add((_) async {
-      await _initialInitCompleter.future;
       final test = _pCache.value[key]?.to;
       //if (test == null) {
       await _translateAndUpdate(defaultValue, key);
@@ -241,7 +210,7 @@ class TranslationController<
         )
         .value;
     if (translated.isErr()) return;
-    //print('TRANSLATED: $translated');
+    print('TRANSLATED: $translated');
     _pCache.update(
       (e) => e
         ..[key] = TranslatedText(
@@ -249,15 +218,14 @@ class TranslationController<
           from: defaultValue,
         ),
     );
-    //print('TO LOCAL: $languageTag');
+    print('TO LOCAL: $languageTag');
     final f1 = cachedDatabaseBroker.patch(
       path: '$translationPath/$languageTag',
       data: {
         key: TranslatedText(to: translated.unwrap(), from: defaultValue).toMap(),
       },
     ).value;
-    //print('TO REMOTE: $languageTag');
-
+    print('TO REMOTE: $languageTag');
     final f2 = remoteDatabaseBroker.patch(
       path: '$translationPath/$languageTag',
       data: {

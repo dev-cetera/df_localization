@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
           return const SizedBox.shrink();
         }
         return MaterialApp(
-          locale: locale,
+          locale: TranslationScope.controllerOf(context)?.locale,
           key: UniqueKey(),
           home: Scaffold(
             body: Padding(

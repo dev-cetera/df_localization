@@ -7,7 +7,8 @@
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //.title~
 
-export './auto_translation_manager.dart';
+export './translation_scope.dart';
+export './translation_controller.dart';
 export './utils/primary_locale.dart';
 export './localization.dart';
 export './implementations/persistent_database_broker.dart';

@@ -22,8 +22,6 @@ class GeminiTranslatorBroker extends TranslatorInterface<GemeniContent> {
   //
   //
 
-  final String projectId;
-  final String location;
   final String model;
 
   //
@@ -31,8 +29,6 @@ class GeminiTranslatorBroker extends TranslatorInterface<GemeniContent> {
   //
 
   const GeminiTranslatorBroker({
-    required this.projectId,
-    required this.location,
     required super.apiKey,
     this.model = 'gemini-1.5-flash-8b',
   }) : assert(apiKey != null);
@@ -67,13 +63,13 @@ class GeminiTranslatorBroker extends TranslatorInterface<GemeniContent> {
   Async<String> translate({
     required List<GemeniContent> contents,
   }) {
+    // See: https://aistudio.google.com/
     return Async(() async {
       final url = Uri.parse(
-        'https://$location-aiplatform.googleapis.com/v1/projects/$projectId/locations/$location/publishers/google/models/$model:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey',
       );
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $apiKey',
       };
       final prompt = {
         'contents': contents.map((content) => content.toJson()).toList(),

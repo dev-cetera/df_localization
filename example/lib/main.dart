@@ -1,8 +1,5 @@
 import 'package:df_localization/df_localization.dart';
-
 import 'package:flutter/material.dart';
-
-import 'api_keys.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
@@ -18,8 +15,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AutoTranslationScope(
       controller: AutoTranslationController(
-        remoteDatabaseBroker: const FirestoreDatabseBroker(projectId: 'langchapp'),
-        translationBroker: const GoogleTranslatorBroker(apiKey: GOOGLE_TRANSLATE_API_KEY),
+        remoteDatabaseBroker: const FirestoreDatabseBroker(projectId: 'YOUR_FIREBASE_PROJECT_ID'),
+        translationBroker: const GeminiTranslatorBroker(apiKey: 'YOUR_GOOGLE_TRANSLATOR_API_KEY'),
         persistentDatabaseBroker: const PersistentDatabaseBroker(),
       ),
       builder: (context, child) {
@@ -65,18 +62,8 @@ class MyApp extends StatelessWidget {
                   ),
 
                   Text(
-                    'How are you {__DISPLAY_NAME__}?||how_are_you'.tr(
-                      args: {'__DISPLAY_NAME__': 'Robert'},
-                    ),
-                  ),
-                  Text(
                     'Welcome to this app {__DISPLAY_NAME__}||welcome_message'.tr(
                       args: {'__DISPLAY_NAME__': 'Robert'},
-                    ),
-                  ),
-                  Text(
-                    'Hey there my man, do you want a {__OBJECT__}||hey_there'.tr(
-                      args: {'__OBJECT__': 'ABC-2000'},
                     ),
                   ),
                 ],

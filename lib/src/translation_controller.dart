@@ -10,9 +10,8 @@
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //.title~
 
-import 'package:df_config/_common.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter/widgets.dart' show Locale, WidgetsBinding;
+import 'package:flutter/widgets.dart' show Locale, WidgetsBinding, visibleForTesting;
 
 import '/_common.dart';
 
@@ -78,8 +77,10 @@ final class TranslationController {
   //
   //
 
+  Future<void> setLocale(Locale locale) => _pLocale!.set(locale);
+
   SharedPod<Locale, String>? _pLocale;
-  SharedPod<Locale, String> get pLocale =>
+  ValueListenable<Locale?> get pLocale =>
       _pLocale ??= _createLocalePod(cacheKey: cacheKey)..refresh();
 
   SharedPod<Locale, String> _createLocalePod({

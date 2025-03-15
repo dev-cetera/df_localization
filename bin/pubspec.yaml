@@ -26,5 +26,8 @@ dependencies:
   df_log: ^0.2.4
   google_generative_ai: ^0.4.6
 
+## -----------------------------------------------------------------------------
+
+dev_dependencies:
   df_localization:
     path: ../

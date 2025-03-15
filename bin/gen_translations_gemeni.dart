@@ -12,7 +12,6 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:df_localization/df_localization.dart';
 import 'package:df_log/df_log.dart';
 import 'package:path/path.dart' as p;
 import 'package:args/args.dart';
@@ -188,6 +187,7 @@ void main(List<String> arguments) async {
 
     checked = (jsonDecode(transalted) as Map).cast<String, dynamic>();
   } catch (e) {
+    printBlue(e);
     printRed(
       'Error! The translation could not be generated. Please check your Gemeni API key and try again.',
     );

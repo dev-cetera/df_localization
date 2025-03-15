@@ -9,17 +9,138 @@ Dart & Flutter Packages by dev-cetera.com & contributors.
 
 ## Summary
 
-A package that provides an easy way to add localization support to your Flutter app.
+A package that provides an easy way to add localization support to your Flutter app. It supports automatic translation using Google Translator and Firebase, as well as manual translation using language files. All translations are cached for fast access and can be easily updated.
 
 For a full feature set, please refer to the [API reference](https://pub.dev/documentation/df_localization/).
 
-## Usage Example
+## Example - Automatic translation of your app using Google Translator and Firebase (or any other backend):
 
-Unavailable. Please check in later.
+```dart
+@override
+Widget build(BuildContext context) {
+  return AutoTranslationScope(
+    controller: AutoTranslationController(
+      remoteDatabaseBroker: const FirestoreDatabseBroker(projectId: 'YOUR_FIREBASE_PROJECT_ID'),
+      persistentDatabaseBroker: const PersistentDatabaseBroker(),
+    ),
+    builder: (context, child) {
+      return MaterialApp(
+        locale: AutoTranslationScope.controllerOf(context)?.locale,
+        home: Scaffold(
+          body: Column(
+            children: [
+              FilledButton(
+                onPressed: () {
+                  final locale = primaryLocale(WidgetsBinding.instance);
+                  AutoTranslationScope.controllerOf(context)?.setLocale(locale);
+                },
+                child: const Text('Default'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  AutoTranslationScope.controllerOf(
+                    context,
+                  )?.setLocale(const Locale('zh', 'CN'));
+                },
+                child: const Text('Chinese (CN)'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  AutoTranslationScope.controllerOf(
+                    context,
+                  )?.setLocale(const Locale('de', 'DE'));
+                },
+                child: const Text('German (DE)'),
+              ),
 
-## Installation
+              Text(
+                'Welcome to this app {__DISPLAY_NAME__}||welcome_message'.tr(
+                  args: {'__DISPLAY_NAME__': 'Robert'},
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+```
 
-Use this package as a dependency by adding it to your `pubspec.yaml` file (see [here](https://pub.dev/packages/df_localization/install)).
+## Example - Translating your app from langauge files:
+
+```dart
+import 'package:df_localization/df_localization.dart';
+import 'package:flutter/material.dart';
+
+void main() {
+  TranslationController.createInstance(translationsDirPath: 'assets/translations');
+  runApp(
+    ValueListenableBuilder(
+      valueListenable: TranslationController.i.pLocale,
+      builder: (context, locale, child) {
+        return MaterialApp(
+          locale: locale,
+          home: Column(
+            children: [
+              Text('Hello World||hello-world'.tr()),
+              FilledButton(
+                onPressed: () {
+                  TranslationController.i.setLocale(const Locale('en', 'us'));
+                },
+                child: const Text('English (US)'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  TranslationController.i.setLocale(const Locale('de', 'de'));
+                },
+                child: const Text('Deutsch (DE)'),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+```
+
+## Example - Generating translation files for your source code using Gemeni:
+
+1. Translate text in your app like this:
+
+```dart
+import 'package:df_localization/df_localization.dart';
+
+Text('Hello World'.tr());
+Text('Hello World||hello-world'.tr()); // You can provide a key for the translation
+Text('Hello {__WORLD__}'.tr(args: {'__WORLD__': 'World'})); // You can provide arguments for the translation
+```
+
+2. Obtain your Gemeni API key here: https://ai.google.dev/gemini-api/docs/api-key
+
+3. Install the translation file generator tool:
+
+```sh
+dart pub global activate gen_translations_gemeni
+```
+
+3. Generate a translation file for your app, e.g. for German (de-de):
+
+```sh
+cd YOUR_FLUTTER_PROJECT
+gen_translations_gemeni --locale "de-de" --api_key="YOUR_GEMENI_API_KEY" --output "assets/translations"
+```
+
+This will read your source code for all `.tr()` calls and send the text to Gemeni for translation. The generated translation file will be saved in `assets/translations/de-de.yaml`.
+
+4. Edit the generated translation file in `assets/translations/de-de.yaml`:
+
+```yaml
+hello-world: Hallo Welt
+```
+
+5. Run your app with the new translation.
 
 ---
 

@@ -132,6 +132,23 @@ cd YOUR_FLUTTER_PROJECT
 gen_translations_gemeni --locale "de-de" --api_key="YOUR_GEMENI_API_KEY" --output "assets/translations"
 ```
 
+The following options are available:
+
+```
+-h, --help       Show this help message.
+-r, --root       Root directory to search for translation keys.
+                 (defaults to "/Users/robmllze/Projects/flutter/dev_cetera/df_packages/packages/df_localization/bin")
+    --api_key    Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.
+    --model      The Gemeni LLM to use.
+                 (defaults to "gemini-1.5-flash-latest")
+-l, --locale     Specify your locale or language, e.g. "en-us" or "English"
+                 (defaults to "en-us")
+-o, --output     Output directory path for the generated translation JSON.
+                 (defaults to "/Users/robmllze/Projects/flutter/dev_cetera/df_packages/packages/df_localization/bin")
+-t, --type       Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".
+                 (defaults to "yaml")
+```
+
 This will read your source code for all `.tr()` calls and send the text to Gemeni for translation. The generated translation file will be saved in `assets/translations/de-de.yaml`.
 
 4. Edit the generated translation file in `assets/translations/de-de.yaml`:

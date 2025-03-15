@@ -115,10 +115,8 @@ class TranslationController<
     await _sequential.add((_) async {
       success = await _loadRemoteTranslations(locale);
       if (!success) {
-        // _pCache.set({});
-        // await _saveCache();
+        _pCache.set({});
       }
-
       return const None();
     }).value;
     if (!success) {

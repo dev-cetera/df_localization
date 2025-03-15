@@ -19,9 +19,10 @@ import '/_common.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 class AutoTranslationController<
-    TRemoteDatabaseInterface extends DatabaseInterface,
-    TCachedDatabaseInterface extends DatabaseInterface,
-    TTranslationInterface extends TranslatorInterface> {
+  TRemoteDatabaseInterface extends DatabaseInterface,
+  TCachedDatabaseInterface extends DatabaseInterface,
+  TTranslationInterface extends TranslatorInterface
+> {
   //
   //
   //
@@ -78,7 +79,9 @@ class AutoTranslationController<
       await _pLocale!.set(locale);
     }
     final a = await _loadTranslations(remoteDatabaseBroker, this.locale);
-    final b = _loadTranslations(persistentDatabaseBroker, this.locale).then((c) {
+    final b = _loadTranslations(persistentDatabaseBroker, this.locale).then((
+      c,
+    ) {
       final d = c ?? {};
       _pCache.set(d);
       _saveTranslations(persistentDatabaseBroker, this.locale, d);
@@ -156,10 +159,7 @@ class AutoTranslationController<
   ) {
     final path = _databasePath(translationPath, locale);
     final data = _convertTo(translations);
-    return databaseBroker.write(
-      path: path,
-      data: data,
-    );
+    return databaseBroker.write(path: path, data: data);
   }
 
   //
@@ -173,7 +173,10 @@ class AutoTranslationController<
   // reset in setLocale.
   final _didRequestTranslate = <String>{};
 
-  Future<void> _translateAndUpdateSequentally(String defaultValue, String key) async {
+  Future<void> _translateAndUpdateSequentally(
+    String defaultValue,
+    String key,
+  ) async {
     await _translationSeq.add((_) async {
       await _translateAndUpdate(defaultValue, key);
     }).value;
@@ -191,13 +194,14 @@ class AutoTranslationController<
     final test = _pCache.value[key]?.to;
     if (test != null) return;
 
-    final translated = await translationBroker
-        .translateSentence(
-          text: defaultValue,
-          languageCode: this.locale.languageCode,
-          countryCode: this.locale.countryCode,
-        )
-        .value;
+    final translated =
+        await translationBroker
+            .translateSentence(
+              text: defaultValue,
+              languageCode: this.locale.languageCode,
+              countryCode: this.locale.countryCode,
+            )
+            .value;
 
     // If the translation fails, no more attemps will be made since the
     // key is already added to _didRequestTranslate. This is deliberate to
@@ -206,38 +210,47 @@ class AutoTranslationController<
 
     // Update the cache in memory with the translated text.
     _pCache.update(
-      (e) => e
-        ..[key] = TranslatedText(
-          to: translated.unwrap(),
-          from: defaultValue,
-        ),
+      (e) =>
+          e
+            ..[key] = TranslatedText(
+              to: translated.unwrap(),
+              from: defaultValue,
+            ),
     );
 
     final path = _databasePath(translationPath, locale);
 
     // Update the persistent database.
-    final futureResult1 = persistentDatabaseBroker.patch(
-      path: path,
-      data: {
-        key: TranslatedText(to: translated.unwrap(), from: defaultValue).toMap(),
-      },
-    ).value;
+    final futureResult1 =
+        persistentDatabaseBroker
+            .patch(
+              path: path,
+              data: {
+                key:
+                    TranslatedText(
+                      to: translated.unwrap(),
+                      from: defaultValue,
+                    ).toMap(),
+              },
+            )
+            .value;
 
     // Update the remote database.ßå
-    final futureResult2 = remoteDatabaseBroker.patch(
-      path: path,
-      data: {
-        key: TranslatedText(
-          to: translated.unwrap(),
-          from: defaultValue,
-        ).toMap(),
-      },
-    ).value;
+    final futureResult2 =
+        remoteDatabaseBroker
+            .patch(
+              path: path,
+              data: {
+                key:
+                    TranslatedText(
+                      to: translated.unwrap(),
+                      from: defaultValue,
+                    ).toMap(),
+              },
+            )
+            .value;
 
-    final results = await Future.wait([
-      futureResult1,
-      futureResult2,
-    ]);
+    final results = await Future.wait([futureResult1, futureResult2]);
 
     final result1 = results[0];
     final result2 = results[1];
@@ -258,9 +271,7 @@ class AutoTranslationController<
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-SharedPod<Locale, String> _createLocalePod({
-  required String cacheKey,
-}) {
+SharedPod<Locale, String> _createLocalePod({required String cacheKey}) {
   final fallbackLocale = primaryLocale(WidgetsBinding.instance);
   return SharedPod<Locale, String>(
     cacheKey,
@@ -281,16 +292,10 @@ final class TranslatedText {
   final String? to;
   final String? from;
 
-  const TranslatedText({
-    required this.to,
-    required this.from,
-  });
+  const TranslatedText({required this.to, required this.from});
 
   Map<String, dynamic> toMap() {
-    return {
-      if (to != null) 'to': to,
-      if (from != null) 'from': from,
-    };
+    return {if (to != null) 'to': to, if (from != null) 'from': from};
   }
 
   factory TranslatedText.fromMap(Map<String, dynamic> map) {

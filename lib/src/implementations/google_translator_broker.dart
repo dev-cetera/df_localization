@@ -14,14 +14,14 @@ import '/_common.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String>> {
+class GoogleTranslatorBroker
+    extends TranslatorInterface<MapEntry<String, String>> {
   //
   //
   //
 
-  const GoogleTranslatorBroker({
-    required super.apiKey,
-  }) : assert(apiKey != null);
+  const GoogleTranslatorBroker({required super.apiKey})
+    : assert(apiKey != null);
 
   //
   //
@@ -33,14 +33,9 @@ class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String
     required String languageCode,
     required String? countryCode,
   }) {
-    final input = {
-      'q': text,
-      'target': languageCode,
-      'format': 'text',
-    }.entries.toList();
-    return translate(
-      contents: input,
-    );
+    final input =
+        {'q': text, 'target': languageCode, 'format': 'text'}.entries.toList();
+    return translate(contents: input);
   }
 
   //
@@ -48,9 +43,7 @@ class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String
   //
 
   @override
-  Async<String> translate({
-    required List<MapEntry<String, String>> contents,
-  }) {
+  Async<String> translate({required List<MapEntry<String, String>> contents}) {
     return Async(() async {
       final url = Uri.parse(
         'https://translation.googleapis.com/language/translate/v2?key=$apiKey',
@@ -67,9 +60,11 @@ class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String
           statusCode: response.statusCode,
         );
       }
-      final result = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      )?['data']?['translations']?[0]?['translatedText'] as String;
+      final result =
+          jsonDecode(
+                utf8.decode(response.bodyBytes),
+              )?['data']?['translations']?[0]?['translatedText']
+              as String;
       return result;
     });
   }

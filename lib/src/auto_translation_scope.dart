@@ -61,7 +61,9 @@ class AutoTranslationScope extends StatefulWidget {
   /// Returns the [AutoTranslationController] of the nearest
   /// [AutoTranslationScope] ancestor of the given [BuildContext].
   static AutoTranslationController? controllerOf(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_AutoTranslationScope>()?.controller;
+    return context
+        .dependOnInheritedWidgetOfExactType<_AutoTranslationScope>()
+        ?.controller;
   }
 
   //
@@ -105,15 +107,10 @@ class _AutoTranslationScopeState extends State<AutoTranslationScope> {
         final value = snapshot.value;
         final child = snapshot.child;
         return SizedBox(
-          child: (value != null
-                  ? widget.builder?.call(
-                      context,
-                      child,
-                    )
-                  : widget.initializingBuilder?.call(
-                      context,
-                      child,
-                    )) ??
+          child:
+              (value != null
+                  ? widget.builder?.call(context, child)
+                  : widget.initializingBuilder?.call(context, child)) ??
               child,
         );
       },
@@ -139,10 +136,7 @@ class _AutoTranslationScope extends InheritedWidget {
   //
   //
 
-  const _AutoTranslationScope({
-    required this.controller,
-    required super.child,
-  });
+  const _AutoTranslationScope({required this.controller, required super.child});
 
   //
   //
@@ -154,4 +148,5 @@ class _AutoTranslationScope extends InheritedWidget {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-typedef _ChildWidgetBuilder = Widget Function(BuildContext context, Widget? child);
+typedef _ChildWidgetBuilder =
+    Widget Function(BuildContext context, Widget? child);

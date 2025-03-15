@@ -60,13 +60,9 @@ class ClaudeTranslatorBroker extends TranslatorInterface<ClaudeContent> {
   //
 
   @override
-  Async<String> translate({
-    required List<ClaudeContent> contents,
-  }) {
+  Async<String> translate({required List<ClaudeContent> contents}) {
     return Async(() async {
-      final url = Uri.parse(
-        'https://api.anthropic.com/v1/messages',
-      );
+      final url = Uri.parse('https://api.anthropic.com/v1/messages');
       final headers = {
         'Content-Type': 'application/json',
         'x-api-key': apiKey!,
@@ -80,11 +76,7 @@ class ClaudeTranslatorBroker extends TranslatorInterface<ClaudeContent> {
         'messages': contents.map((content) => content.toJson()).toList(),
       });
 
-      final response = await post(
-        url,
-        headers: headers,
-        body: body,
-      );
+      final response = await post(url, headers: headers, body: body);
 
       if (response.statusCode != 200) {
         throw Err(
@@ -94,9 +86,7 @@ class ClaudeTranslatorBroker extends TranslatorInterface<ClaudeContent> {
         );
       }
 
-      final responseData = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      );
+      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
       final translatedText = responseData['content'][0]['text'] as String;
 
       return translatedText;
@@ -114,10 +104,7 @@ final class ClaudeContent {
   const ClaudeContent.user(this.content) : role = 'user';
   const ClaudeContent.assistant(this.content) : role = 'assistant';
 
-  Map<String, String> toJson() => {
-        'role': role,
-        'content': content,
-      };
+  Map<String, String> toJson() => {'role': role, 'content': content};
 }
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░

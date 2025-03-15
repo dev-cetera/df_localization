@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.0]
+
+- Released @ 3/2025 (UTC)
+- breaking: Add auto translation feature
+
 ## [0.4.2]
 
 - Released @ 2/2025 (UTC)

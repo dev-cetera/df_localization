@@ -25,7 +25,5 @@ abstract class TranslatorInterface<T extends Object> {
     required String? countryCode,
   });
 
-  Async<String> translate({
-    required List<T> contents,
-  });
+  Async<String> translate({required List<T> contents});
 }

@@ -2,7 +2,9 @@ import 'package:df_localization/df_localization.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  TranslationController.createInstance(translationsDirPath: 'assets/translations');
+  TranslationController.createInstance(
+    translationsDirPath: 'assets/translations',
+  );
   runApp(
     ValueListenableBuilder(
       valueListenable: TranslationController.i.pLocale,

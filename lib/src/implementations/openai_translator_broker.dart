@@ -57,13 +57,9 @@ class OpenAITranslatorBroker extends TranslatorInterface<OpenAIContent> {
   //
 
   @override
-  Async<String> translate({
-    required List<OpenAIContent> contents,
-  }) {
+  Async<String> translate({required List<OpenAIContent> contents}) {
     return Async(() async {
-      final url = Uri.parse(
-        'https://api.openai.com/v1/chat/completions',
-      );
+      final url = Uri.parse('https://api.openai.com/v1/chat/completions');
       final headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $apiKey',
@@ -74,11 +70,7 @@ class OpenAITranslatorBroker extends TranslatorInterface<OpenAIContent> {
         'temperature': 0.7,
       });
 
-      final response = await post(
-        url,
-        headers: headers,
-        body: body,
-      );
+      final response = await post(url, headers: headers, body: body);
       if (response.statusCode != 200) {
         throw Err(
           debugPath: ['OpenAITranslator', 'translate'],
@@ -87,8 +79,9 @@ class OpenAITranslatorBroker extends TranslatorInterface<OpenAIContent> {
         );
       }
       return jsonDecode(
-        utf8.decode(response.bodyBytes),
-      )['choices'][0]['message']['content'] as String;
+            utf8.decode(response.bodyBytes),
+          )['choices'][0]['message']['content']
+          as String;
     });
   }
 }
@@ -103,10 +96,7 @@ final class OpenAIContent {
   const OpenAIContent.user(this.content) : role = 'user';
   const OpenAIContent.assistant(this.content) : role = 'assistant';
 
-  Map<String, String> toJson() => {
-        'role': role,
-        'content': content,
-      };
+  Map<String, String> toJson() => {'role': role, 'content': content};
 }
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░

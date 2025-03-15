@@ -27,7 +27,9 @@ dynamic convertToLocalValue(dynamic value) {
         value['mapValue']['fields'] as Map<String, dynamic>,
       );
     } else if (value.containsKey('arrayValue')) {
-      return (value['arrayValue']['values']).map((dynamic e) => convertToLocalValue(e)).toList();
+      return (value['arrayValue']['values'])
+          .map((dynamic e) => convertToLocalValue(e))
+          .toList();
     } else if (value.containsKey('stringValue')) {
       return value['stringValue'];
     } else if (value.containsKey('integerValue')) {

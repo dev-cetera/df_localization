@@ -15,9 +15,7 @@ import '/_common.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 class FirebaseAuthBroker extends AuthInterface {
-  const FirebaseAuthBroker({
-    required super.apiKey,
-  }) : assert(apiKey != null);
+  const FirebaseAuthBroker({required super.apiKey}) : assert(apiKey != null);
 
   @override
   Async<LoginResult> logInWithEmailAndPassword({

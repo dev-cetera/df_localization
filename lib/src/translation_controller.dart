@@ -11,7 +11,8 @@
 //.title~
 
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter/widgets.dart' show Locale, WidgetsBinding, visibleForTesting;
+import 'package:flutter/widgets.dart'
+    show Locale, WidgetsBinding, visibleForTesting;
 
 import '/_common.dart';
 
@@ -83,9 +84,7 @@ final class TranslationController {
   ValueListenable<Locale?> get pLocale =>
       _pLocale ??= _createLocalePod(cacheKey: cacheKey)..refresh();
 
-  SharedPod<Locale, String> _createLocalePod({
-    required String cacheKey,
-  }) {
+  SharedPod<Locale, String> _createLocalePod({required String cacheKey}) {
     final fallbackLocale = primaryLocale(WidgetsBinding.instance);
     return SharedPod<Locale, String>(
       cacheKey,

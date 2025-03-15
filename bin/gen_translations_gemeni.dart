@@ -39,10 +39,10 @@ void main(List<String> arguments) async {
     )
     ..addOption(
       'api_key',
-      //help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
+      help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
     )
     ..addOption(
-      'gemeni_model',
+      'model',
       help: 'The Gemeni LLM to use.',
       defaultsTo: 'gemini-1.5-flash-latest',
     )
@@ -75,7 +75,7 @@ void main(List<String> arguments) async {
 
   final rootPath = argResults['root']!.toString().trim();
   final apiKey = argResults['api_key']?.toString().trim();
-  final gemeniModel = argResults['gemeni_model']!.toString().trim();
+  final model = argResults['model']!.toString().trim();
   final locale = argResults['locale']!.toString().trim();
   final type = argResults['type']!.toString().toLowerCase().trim();
   final outputDirPath = argResults['output']!.toString().trim();
@@ -181,7 +181,7 @@ void main(List<String> arguments) async {
         ? await translateWithGemeni(
             data: input,
             apiKey: apiKey,
-            //gemeniModel: gemeniModel,
+            gemeniModel: model,
             locale: locale,
           )
         : input;
@@ -236,32 +236,16 @@ String mapToYaml(Map<String, dynamic> map, {int indent = 0}) {
 Future<String> translateWithGemeni({
   required String data,
   required String apiKey,
-  //required String gemeniModel,
+  required String gemeniModel,
   required String locale,
 }) async {
-  final parts = locale.split('-');
-  final languageCode = parts.first;
-  final countryCode = parts.length > 1 ? parts.last : null;
-  final translator = GoogleTranslatorBroker(apiKey: apiKey);
-
-  final result = await translator
-      .translate(
-        text: data,
-        languageCode: languageCode,
-        countryCode: countryCode,
-      )
-      .value;
-
-  // OLD CODE:
-  // final model = GenerativeModel(model: gemeniModel, apiKey: gemeniApiKey);
-  // final content = [
-  //   Content.text('Translate the following JSON translation file into $locale:'),
-  //   Content.text(data),
-  // ];
-  // final response = await model.generateContent(content);
-  // var text = response.text!.trim();
-
-  var text = result.unwrap();
+  final model = GenerativeModel(model: gemeniModel, apiKey: apiKey);
+  final content = [
+    Content.text('Translate the following JSON translation file into $locale:'),
+    Content.text(data),
+  ];
+  final response = await model.generateContent(content);
+  var text = response.text!.trim();
 
   // Remove any markdown code block wrapping.
   if (text.startsWith('```')) {

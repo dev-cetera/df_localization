@@ -10,22 +10,21 @@
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //.title~
 
-import 'package:df_safer_dart/df_safer_dart.dart';
+import 'package:flutter/widgets.dart' show Locale;
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-abstract class DatabaseInterface {
-  const DatabaseInterface();
-
-  Async<Map<String, dynamic>> read(String path);
-
-  Async<None> write({
-    required String path,
-    required Map<String, dynamic> data,
-  });
-
-  Async<None> patch({
-    required String path,
-    required Map<String, dynamic> data,
-  });
+Locale? localeFromString(String? localeString) {
+  if (localeString == null || localeString.isEmpty) {
+    return null;
+  }
+  final parts = localeString.split('-');
+  if (parts.length == 1) {
+    final languageCode = parts[0];
+    return Locale(languageCode);
+  } else {
+    final languageCode = parts.sublist(0, parts.length - 1).join('-');
+    final countryCode = parts.last;
+    return Locale(languageCode, countryCode);
+  }
 }

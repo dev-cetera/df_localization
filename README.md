@@ -9,7 +9,7 @@ Dart & Flutter Packages by dev-cetera.com & contributors.
 
 ## Summary
 
-A package that provides an easy way to add localization to your Flutter app.
+A package that provides an easy way to add localization support to your Flutter app.
 
 For a full feature set, please refer to the [API reference](https://pub.dev/documentation/df_localization/).
 

@@ -10,22 +10,10 @@
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //.title~
 
-import 'package:df_safer_dart/df_safer_dart.dart';
+import 'package:flutter/widgets.dart' show Locale;
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-abstract class DatabaseInterface {
-  const DatabaseInterface();
-
-  Async<Map<String, dynamic>> read(String path);
-
-  Async<None> write({
-    required String path,
-    required Map<String, dynamic> data,
-  });
-
-  Async<None> patch({
-    required String path,
-    required Map<String, dynamic> data,
-  });
+String normalizedLangaugeTag(Locale locale) {
+  return locale.toLanguageTag().toLowerCase();
 }

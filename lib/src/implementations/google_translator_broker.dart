@@ -14,7 +14,7 @@ import '/_common.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-class GoogleTranslatorBroker extends TranslatorInterface {
+class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String>> {
   //
   //
   //
@@ -28,10 +28,28 @@ class GoogleTranslatorBroker extends TranslatorInterface {
   //
 
   @override
-  Async<String> translate({
+  Async<String> translateSentence({
     required String text,
     required String languageCode,
     required String? countryCode,
+  }) {
+    final input = {
+      'q': text,
+      'target': languageCode,
+      'format': 'text',
+    }.entries.toList();
+    return translate(
+      contents: input,
+    );
+  }
+
+  //
+  //
+  //
+
+  @override
+  Async<String> translate({
+    required List<MapEntry<String, String>> contents,
   }) {
     return Async(() async {
       final url = Uri.parse(
@@ -40,11 +58,7 @@ class GoogleTranslatorBroker extends TranslatorInterface {
       final response = await post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'q': text,
-          'target': languageCode,
-          'format': 'text',
-        }),
+        body: jsonEncode(Map.fromEntries(contents)),
       );
       if (response.statusCode != 200) {
         throw Err(

@@ -8,7 +8,6 @@ import 'api_keys.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(const MyApp());
 }
 
@@ -17,19 +16,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TranslationScope(
-      controller: TranslationController(
+    return AutoTranslationScope(
+      controller: AutoTranslationController(
         remoteDatabaseBroker: const FirestoreDatabseBroker(projectId: 'langchapp'),
         translationBroker: const GoogleTranslatorBroker(apiKey: GOOGLE_TRANSLATE_API_KEY),
-        cachedDatabaseBroker: const PersistentDatabaseBroker(),
+        persistentDatabaseBroker: const PersistentDatabaseBroker(),
       ),
-      builder: (context, locale, child) {
-        if (locale == null) {
-          return const SizedBox.shrink();
-        }
+      builder: (context, child) {
         return MaterialApp(
-          locale: TranslationScope.controllerOf(context)?.locale,
-          key: UniqueKey(),
+          locale: AutoTranslationScope.controllerOf(context)?.locale,
           home: Scaffold(
             body: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -40,25 +35,31 @@ class MyApp extends StatelessWidget {
                   FilledButton(
                     onPressed: () {
                       final locale = primaryLocale(WidgetsBinding.instance);
-                      TranslationScope.controllerOf(context)?.setLocale(locale);
+                      AutoTranslationScope.controllerOf(context)?.setLocale(locale);
                     },
                     child: const Text('Default'),
                   ),
                   FilledButton(
                     onPressed: () {
-                      TranslationScope.controllerOf(context)?.setLocale(const Locale('zh', 'CN'));
+                      AutoTranslationScope.controllerOf(
+                        context,
+                      )?.setLocale(const Locale('zh', 'CN'));
                     },
                     child: const Text('Chinese (CN)'),
                   ),
                   FilledButton(
                     onPressed: () {
-                      TranslationScope.controllerOf(context)?.setLocale(const Locale('es', 'MX'));
+                      AutoTranslationScope.controllerOf(
+                        context,
+                      )?.setLocale(const Locale('es', 'MX'));
                     },
                     child: const Text('Spanish (MX)'),
                   ),
                   FilledButton(
                     onPressed: () {
-                      TranslationScope.controllerOf(context)?.setLocale(const Locale('de', 'DE'));
+                      AutoTranslationScope.controllerOf(
+                        context,
+                      )?.setLocale(const Locale('de', 'DE'));
                     },
                     child: const Text('German (DE)'),
                   ),

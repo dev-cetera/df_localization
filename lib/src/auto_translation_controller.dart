@@ -13,6 +13,7 @@
 // ignore_for_file: body_might_complete_normally_nullable
 
 // ignore: unused_shown_name
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show Locale, WidgetsBinding, debugPrint;
 
 import '/_common.dart';
@@ -41,7 +42,7 @@ class AutoTranslationController<
   //
 
   AutoTranslationController({
-    required this.autoTranslate,
+    this.autoTranslate = kDebugMode,
     required this.remoteDatabaseBroker,
     required this.persistentDatabaseBroker,
     required this.translationBroker,
@@ -121,6 +122,8 @@ class AutoTranslationController<
           defaultValue = _pCache.value[textKey]!.to!;
         } catch (_) {
           defaultValue = textResult.defaultValue;
+          // Only attempt to translate if autoTranslate is enabled, a locale
+          // exists and in debug mode.
           if (autoTranslate && this.locale != null) {
             _translateAndUpdateSequentally(defaultValue, textKey);
           }

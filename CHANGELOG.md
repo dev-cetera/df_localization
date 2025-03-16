@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.4]
+
+- Released @ 3/2025 (UTC)
+- feat: Support null value for locale
+
 ## [0.5.3]
 
 - Released @ 3/2025 (UTC)

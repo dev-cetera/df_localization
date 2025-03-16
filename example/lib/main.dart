@@ -15,12 +15,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AutoTranslationScope(
       controller: AutoTranslationController(
-        remoteDatabaseBroker: const FirestoreDatabseBroker(
-          projectId: 'YOUR_FIREBASE_PROJECT_ID',
-        ),
-        translationBroker: const GeminiTranslatorBroker(
-          apiKey: 'YOUR_GOOGLE_TRANSLATOR_API_KEY',
-        ),
+        remoteDatabaseBroker: const FirestoreDatabseBroker(projectId: 'YOUR_FIREBASE_PROJECT_ID'),
+        translationBroker: const GoogleTranslatorBroker(apiKey: 'YOUR_GOOGLE_TRANSLATOR_API_KEY'),
         persistentDatabaseBroker: const PersistentDatabaseBroker(),
       ),
       builder: (context, child) {
@@ -36,9 +32,7 @@ class MyApp extends StatelessWidget {
                   FilledButton(
                     onPressed: () {
                       final locale = primaryLocale(WidgetsBinding.instance);
-                      AutoTranslationScope.controllerOf(
-                        context,
-                      )?.setLocale(locale);
+                      AutoTranslationScope.controllerOf(context)?.setLocale(locale);
                     },
                     child: const Text('Default'),
                   ),
@@ -68,8 +62,9 @@ class MyApp extends StatelessWidget {
                   ),
 
                   Text(
-                    'Welcome to this app {__DISPLAY_NAME__}||welcome_message'
-                        .tr(args: {'__DISPLAY_NAME__': 'Robert'}),
+                    'Welcome to this app {__DISPLAY_NAME__}||welcome_message'.tr(
+                      args: {'__DISPLAY_NAME__': 'Robert'},
+                    ),
                   ),
                 ],
               ),

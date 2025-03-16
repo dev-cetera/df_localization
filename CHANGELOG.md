@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.2]
+
+- Released @ 3/2025 (UTC)
+- chore: Minor bugfix with Firebase patch keys not allowing dots or slashes
+
 ## [0.5.1]
 
 - Released @ 3/2025 (UTC)

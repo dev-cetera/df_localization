@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.3]
+
+- Released @ 3/2025 (UTC)
+- chore: Removed debug logs
+
 ## [0.5.2]
 
 - Released @ 3/2025 (UTC)

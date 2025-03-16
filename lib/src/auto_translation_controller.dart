@@ -20,9 +20,10 @@ import '/_common.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 class AutoTranslationController<
-    TRemoteDatabaseInterface extends DatabaseInterface,
-    TCachedDatabaseInterface extends DatabaseInterface,
-    TTranslationInterface extends TranslatorInterface> {
+  TRemoteDatabaseInterface extends DatabaseInterface,
+  TCachedDatabaseInterface extends DatabaseInterface,
+  TTranslationInterface extends TranslatorInterface
+> {
   //
   //
   //
@@ -195,13 +196,14 @@ class AutoTranslationController<
     //   '[TranslationController._createTranslationManager] Did not get translation for key: $key. Attempting to translate...',
     // );
 
-    final translated = await translationBroker
-        .translateSentence(
-          text: defaultValue,
-          languageCode: this.locale.languageCode,
-          countryCode: this.locale.countryCode,
-        )
-        .value;
+    final translated =
+        await translationBroker
+            .translateSentence(
+              text: defaultValue,
+              languageCode: this.locale.languageCode,
+              countryCode: this.locale.countryCode,
+            )
+            .value;
 
     // If the translation fails, no more attemps will be made since the
     // key is already added to _didRequestTranslate. This is deliberate to
@@ -210,36 +212,45 @@ class AutoTranslationController<
 
     // Update the cache in memory with the translated text.
     _pCache.update(
-      (e) => e
-        ..[key] = TranslatedText(
-          to: translated.unwrap(),
-          from: defaultValue,
-        ),
+      (e) =>
+          e
+            ..[key] = TranslatedText(
+              to: translated.unwrap(),
+              from: defaultValue,
+            ),
     );
 
     final path = _databasePath(translationPath, locale);
 
     // Update the persistent database.
-    final futureResult1 = persistentDatabaseBroker.patch(
-      path: path,
-      data: {
-        key: TranslatedText(
-          to: translated.unwrap(),
-          from: defaultValue,
-        ).toMap(),
-      },
-    ).value;
+    final futureResult1 =
+        persistentDatabaseBroker
+            .patch(
+              path: path,
+              data: {
+                key:
+                    TranslatedText(
+                      to: translated.unwrap(),
+                      from: defaultValue,
+                    ).toMap(),
+              },
+            )
+            .value;
 
     // Update the remote database.ßå
-    final futureResult2 = remoteDatabaseBroker.patch(
-      path: path,
-      data: {
-        key: TranslatedText(
-          to: translated.unwrap(),
-          from: defaultValue,
-        ).toMap(),
-      },
-    ).value;
+    final futureResult2 =
+        remoteDatabaseBroker
+            .patch(
+              path: path,
+              data: {
+                key:
+                    TranslatedText(
+                      to: translated.unwrap(),
+                      from: defaultValue,
+                    ).toMap(),
+              },
+            )
+            .value;
 
     final results = await Future.wait([futureResult1, futureResult2]);
 

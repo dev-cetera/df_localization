@@ -4,6 +4,7 @@
 
 - Released @ 3/2025 (UTC)
 - fix: Bugfix
+- chore: Add safety mechanism autoTranslate flag to prevent unnecessary translations that could cost money
 
 ## [0.5.4]
 

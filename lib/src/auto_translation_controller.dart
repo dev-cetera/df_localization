@@ -27,22 +27,25 @@ class AutoTranslationController<
   //
   //
 
-  final String cacheKey;
-  final String translationPath;
+  final bool autoTranslate;
   final TRemoteDatabaseInterface remoteDatabaseBroker;
   final TCachedDatabaseInterface persistentDatabaseBroker;
   final TTranslationInterface translationBroker;
+
+  final String cacheKey;
+  final String translationPath;
 
   //
   //
   //
 
   AutoTranslationController({
+    required this.autoTranslate,
     required this.remoteDatabaseBroker,
     required this.persistentDatabaseBroker,
     required this.translationBroker,
-    this.translationPath = 'translations',
     this.cacheKey = 'locale',
+    this.translationPath = 'translations',
   });
 
   //
@@ -117,7 +120,9 @@ class AutoTranslationController<
           defaultValue = _pCache.value[textKey]!.to!;
         } catch (_) {
           defaultValue = textResult.defaultValue;
-          _translateAndUpdateSequentally(defaultValue, textKey);
+          if (autoTranslate && this.locale != null) {
+            _translateAndUpdateSequentally(defaultValue, textKey);
+          }
         }
         return defaultValue;
       },
@@ -182,8 +187,8 @@ class AutoTranslationController<
   }
 
   Future<void> _translateAndUpdate(String defaultValue, String key) async {
-    // If the locale is null, we should not attempt to translate.
-    if (this.locale == null) return;
+    assert(this.autoTranslate, 'Auto-translation is disabled.');
+    assert(this.locale != null, 'Locale is not set.');
 
     // Safety check #1: If the key is already being translated or has already
     // been translated, we should not attempt to translate it again. This

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.10]
+
+- Released @ 3/2025 (UTC)
+- chore: Add debounceDuration and set default to 300ms.
+
 ## [0.5.9]
 
 - Released @ 3/2025 (UTC)

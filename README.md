@@ -17,7 +17,7 @@ A package that simplifies adding localization to your Flutter app. It supports a
 - Simplifies localization with automatic and manual translation options.
 - It includes built-in support for Google Translate, Gemini, and OpenAI translation services, as well as Firebase Firestore for remote storage and SharedPreferences for local caching. All features are fully customizable to suit your needs.
 - Caches translations for faster performance, offline access and reduced costs.
-- Manual translatio method supports multiple file formats (JSON, YAML) and translation services.
+- The alternative manaul translation method supports multiple file formats (JSON, YAML) and translation services.
 - Super easy to integrate and customize for your app's needs.
 
 For a full feature set, please refer to the [API reference](https://pub.dev/documentation/df_localization/).

@@ -37,6 +37,11 @@ class AutoTranslationScope extends StatefulWidget {
   /// Whether to initialize the translations immediately.
   final bool initialize;
 
+  /// Determines how long to wait after the last translation request
+  /// before updating the UI. For better performance, set this to a
+  /// higher value, for better responsiveness, set this to a lower value.
+  final Duration debounceDuration;
+
   /// The child widget. This is used if the [builder] is not provided and is
   /// also passed to the [builder] and [initializingBuilder].
   final Widget? child;
@@ -51,6 +56,7 @@ class AutoTranslationScope extends StatefulWidget {
     this.builder,
     this.initializingBuilder,
     this.initialize = true,
+    this.debounceDuration = const Duration(milliseconds: 300),
     this.child,
   }) : assert(builder != null || child != null);
 
@@ -61,9 +67,7 @@ class AutoTranslationScope extends StatefulWidget {
   /// Returns the [AutoTranslationController] of the nearest
   /// [AutoTranslationScope] ancestor of the given [BuildContext].
   static AutoTranslationController? controllerOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<_AutoTranslationScope>()
-        ?.controller;
+    return context.dependOnInheritedWidgetOfExactType<_AutoTranslationScope>()?.controller;
   }
 
   /// Returns the [Locale] of the nearest [AutoTranslationScope] ancestor
@@ -108,13 +112,13 @@ class _AutoTranslationScopeState extends State<AutoTranslationScope> {
   @override
   Widget build(BuildContext context) {
     final podBuilder = PodBuilder(
+      debounceDuration: widget.debounceDuration,
       pod: _pCache,
       builder: (context, snapshot) {
         final value = snapshot.value;
         final child = snapshot.child;
         return SizedBox(
-          child:
-              (value != null
+          child: (value != null
                   ? widget.builder?.call(context, child)
                   : widget.initializingBuilder?.call(context, child)) ??
               child,
@@ -154,5 +158,4 @@ class _AutoTranslationScope extends InheritedWidget {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-typedef _ChildWidgetBuilder =
-    Widget Function(BuildContext context, Widget? child);
+typedef _ChildWidgetBuilder = Widget Function(BuildContext context, Widget? child);

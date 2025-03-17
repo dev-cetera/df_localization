@@ -72,7 +72,7 @@ Widget build(BuildContext context) {
                   },
                   child: const Text('Default'),
                 ),
-                // Translate the app into English.
+                // Translate the app into Chinese.
                 FilledButton(
                   onPressed: () {
                     AutoTranslationScope.controllerOf(
@@ -99,7 +99,8 @@ Widget build(BuildContext context) {
                   },
                   child: const Text('German (DE)'),
                 ),
-                // This will display "Welcome to this app Robert" in English.
+                // This will display "Welcome to this app Robert" if the
+                // translation is not available or the langauge is English.
                 //
                 // The key "welcome_message" is optional and is uses as an
                 // identifier for the translation. If the key is not provided,

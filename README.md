@@ -16,58 +16,96 @@ For a full feature set, please refer to the [API reference](https://pub.dev/docu
 
 ## Example 1 - Automatic Translation:
 
+This is undoubtedly the simplest method to implement localization in your application. In debug mode, it automatically translates your text using Google Translate and saves the translations to a remote database. In release mode, this is disabled and it retrieves and caches the translations from the remote database for efficient use.
+
 ```dart
 @override
 Widget build(BuildContext context) {
   return AutoTranslationScope(
     controller: AutoTranslationController(
-      // Use Firestore to store translations.
-      remoteDatabaseBroker: const FirestoreDatabseBroker(
-        projectId: 'YOUR_FIREBASE_PROJECT_ID',
-      ),
-      // Use Google Translator to translate text.
-      translationBroker: const GeminiTranslatorBroker(
-        apiKey: 'YOUR_GOOGLE_TRANSLATOR_API_KEY',
-      ),
-      // Use SharedPreferences to cache translations locally.
+      // Only do auto-translation in debug mode. This will store the
+      // translations in your remote database, so when you run the app in
+      // release mode, the translations are already available. This is
+      // the default behavior.
+      autoTranslate: kDebugMode,
+      // Use the provided `FirestoreDatabseBroker` to store translations,
+      // or define your own by extending the `DatabaseInterface` class.
+      remoteDatabaseBroker: const FirestoreDatabseBroker(projectId: 'YOUR_FIREBASE_PROJECT_ID'),
+      // Use the provided `GoogleTranslatorBroker` to translate text,
+      // or define your own by extending the `TranslatorInterface` class.
+      translationBroker: const GoogleTranslatorBroker(apiKey: 'YOUR_GOOGLE_TRANSLATOR_API_KEY'),
+      // Use the provided `PersistentDatabaseBroker` to store translations locally,
+      // or define your own by extending the `DatabaseInterface` class.
       persistentDatabaseBroker: const PersistentDatabaseBroker(),
     ),
     builder: (context, child) {
       return MaterialApp(
         locale: AutoTranslationScope.controllerOf(context)?.locale,
         home: Scaffold(
-          body: Column(
-            children: [
-              FilledButton(
-                onPressed: () {
-                  final locale = primaryLocale(WidgetsBinding.instance);
-                  AutoTranslationScope.controllerOf(context)?.setLocale(locale);
-                },
-                child: const Text('Default'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  AutoTranslationScope.controllerOf(
-                    context,
-                  )?.setLocale(const Locale('zh', 'CN'));
-                },
-                child: const Text('Chinese (CN)'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  AutoTranslationScope.controllerOf(
-                    context,
-                  )?.setLocale(const Locale('de', 'DE'));
-                },
-                child: const Text('German (DE)'),
-              ),
-
-              Text(
-                'Welcome to this app {__DISPLAY_NAME__}||welcome_message'.tr(
-                  args: {'__DISPLAY_NAME__': 'Robert'},
+          body: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              spacing: 8.0,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Translate the app into the system language.
+                FilledButton(
+                  onPressed: () {
+                    final locale = getPrimaryLocale(WidgetsBinding.instance);
+                    AutoTranslationScope.controllerOf(context)?.setLocale(locale);
+                  },
+                  child: const Text('Default'),
                 ),
-              ),
-            ],
+                // Translate the app into English.
+                FilledButton(
+                  onPressed: () {
+                    AutoTranslationScope.controllerOf(
+                      context,
+                    )?.setLocale(const Locale('zh', 'CN'));
+                  },
+                  child: const Text('Chinese (CN)'),
+                ),
+                // Translate the app into Spanish.
+                FilledButton(
+                  onPressed: () {
+                    AutoTranslationScope.controllerOf(
+                      context,
+                    )?.setLocale(const Locale('es', 'MX'));
+                  },
+                  child: const Text('Spanish (MX)'),
+                ),
+                // Translate the app into German.
+                FilledButton(
+                  onPressed: () {
+                    AutoTranslationScope.controllerOf(
+                      context,
+                    )?.setLocale(const Locale('de', 'DE'));
+                  },
+                  child: const Text('German (DE)'),
+                ),
+                // This will display "Welcome to this app Robert" in English.
+                //
+                // The key "welcome_message" is optional and is uses as an
+                // identifier for the translation. If the key is not provided,
+                // the default text is used as the key.
+                //
+                // The "||" string is used to separate default text from the
+                // key.
+                //
+                // You can pass custom arguments to the translation using the
+                // `args` parameter. Place your placeholders between
+                // "{" and "}".
+                //
+                // The double underscore "__" is not necessary, but it helps
+                // Google Translate to ignore the placeholder and not
+                // translate it.
+                Text(
+                  'Welcome to this app {__DISPLAY_NAME__}||welcome_message'.tr(
+                    args: {'__DISPLAY_NAME__': 'Robert'},
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -77,6 +115,8 @@ Widget build(BuildContext context) {
 ```
 
 ## Example - Translating From Langauge Files:
+
+This is another way to use the package. It allows you to manually translate your text and store the translations in language files. This is useful when you want to have full control over your translations and don't want to rely on external services.
 
 ```dart
 import 'package:df_localization/df_localization.dart';
@@ -121,6 +161,8 @@ void main() {
 ```
 
 ## Example - Generating Translation Files using Gemeni:
+
+This is a more advanced way to use the package. It allows you to generate translation files for your app using the Gemeni API. Then you can manually edit the translations and use them in your app.
 
 1. Translate text in your app like this:
 

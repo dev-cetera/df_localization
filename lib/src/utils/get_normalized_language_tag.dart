@@ -10,11 +10,10 @@
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //.title~
 
-import 'package:flutter/widgets.dart' show Locale, WidgetsBinding;
+import 'package:flutter/widgets.dart' show Locale;
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-Locale primaryLocale(WidgetsBinding widgetsBinding) {
-  final locales = widgetsBinding.platformDispatcher.locales;
-  return locales.first;
+String getNormalizedLangaugeTag(Locale locale) {
+  return locale.toLanguageTag().toLowerCase();
 }

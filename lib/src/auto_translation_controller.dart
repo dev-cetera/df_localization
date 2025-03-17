@@ -32,7 +32,6 @@ class AutoTranslationController<
   final TRemoteDatabaseInterface remoteDatabaseBroker;
   final TCachedDatabaseInterface persistentDatabaseBroker;
   final TTranslationInterface translationBroker;
-
   final String cacheKey;
   final String translationPath;
 
@@ -82,10 +81,10 @@ class AutoTranslationController<
     if (locale != null) {
       await _pLocale!.set(locale);
     } else if (this.locale == null) {
-      await _pLocale!.set(primaryLocale(WidgetsBinding.instance));
+      await _pLocale!.set(getPrimaryLocale(WidgetsBinding.instance));
     }
-    final a = await _loadTranslations(remoteDatabaseBroker, this.locale!);
-    final b = _loadTranslations(persistentDatabaseBroker, this.locale!).then((
+    final a = await _loadTranslations(persistentDatabaseBroker, this.locale!);
+    final b = _loadTranslations(remoteDatabaseBroker, this.locale!).then((
       c,
     ) {
       final d = c ?? {};
@@ -276,14 +275,14 @@ class AutoTranslationController<
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 SharedPod<Locale, String> _createLocalePod({required String cacheKey}) {
-  final fallbackLocale = primaryLocale(WidgetsBinding.instance);
+  final fallbackLocale = getPrimaryLocale(WidgetsBinding.instance);
   return SharedPod<Locale, String>(
     cacheKey,
     fromValue: (localeString) async {
       return localeFromString(localeString) ?? fallbackLocale;
     },
     toValue: (locale) async {
-      return normalizedLangaugeTag(locale ?? fallbackLocale);
+      return getNormalizedLangaugeTag(locale ?? fallbackLocale);
     },
     initialValue: fallbackLocale,
   );
@@ -328,7 +327,7 @@ Map<String, dynamic> _convertTo(TTransaltionMap input) {
 String _databasePath(String translationPath, Locale locale) {
   assert(translationPath.isNotEmpty);
   final parts = translationPath.split(RegExp(r'[/\\]'));
-  final path = [...parts, normalizedLangaugeTag(locale)].join('/');
+  final path = [...parts, getNormalizedLangaugeTag(locale)].join('/');
   return path;
 }
 

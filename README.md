@@ -29,7 +29,10 @@ This is the easiest way to add localization to your app. In debug mode, it autom
 ```dart
 @override
 Widget build(BuildContext context) {
+  // Wrap your app with the `AutoTranslationScope` widget to provide
+  // translations to your app.
   return AutoTranslationScope(
+    // Customize how your app is translated to fit your needs.
     controller: AutoTranslationController(
       // Only do auto-translation in debug mode. This will store the
       // translations in your remote database, so when you run the app in
@@ -48,7 +51,8 @@ Widget build(BuildContext context) {
     ),
     builder: (context, child) {
       return MaterialApp(
-        locale: AutoTranslationScope.controllerOf(context)?.locale,
+        // You can get the locale of the app using the `AutoTranslationScope.localeOf` method.
+        locale: AutoTranslationScope.localeOf(context),
         home: Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -59,7 +63,11 @@ Widget build(BuildContext context) {
                 // Translate the app into the system language.
                 FilledButton(
                   onPressed: () {
+                    // You can get the system locale of the device using
+                    // the `getPrimaryLocale` method.
                     final locale = getPrimaryLocale(WidgetsBinding.instance);
+                    // You can access the controller using the
+                    // `AutoTranslationScope.controllerOf` method.
                     AutoTranslationScope.controllerOf(context)?.setLocale(locale);
                   },
                   child: const Text('Default'),

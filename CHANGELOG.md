@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.9]
+
+- Released @ 3/2025 (UTC)
+- chore: Update readme
+
 ## [0.5.8]
 
 - Released @ 3/2025 (UTC)

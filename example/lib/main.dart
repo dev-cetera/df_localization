@@ -26,10 +26,14 @@ class MyApp extends StatelessWidget {
         autoTranslate: kDebugMode,
         // Use the provided `FirestoreDatabseBroker` to store translations,
         // or define your own by extending the `DatabaseInterface` class.
-        remoteDatabaseBroker: const FirestoreDatabseBroker(projectId: 'YOUR_FIREBASE_PROJECT_ID'),
+        remoteDatabaseBroker: const FirestoreDatabseBroker(
+          projectId: 'YOUR_FIREBASE_PROJECT_ID',
+        ),
         // Use the provided `GoogleTranslatorBroker` to translate text,
         // or define your own by extending the `TranslatorInterface` class.
-        translationBroker: const GoogleTranslatorBroker(apiKey: 'YOUR_GOOGLE_TRANSLATOR_API_KEY'),
+        translationBroker: const GoogleTranslatorBroker(
+          apiKey: 'YOUR_GOOGLE_TRANSLATOR_API_KEY',
+        ),
         // Use the provided `PersistentDatabaseBroker` to store translations locally,
         // or define your own by extending the `DatabaseInterface` class.
         persistentDatabaseBroker: const PersistentDatabaseBroker(),
@@ -53,7 +57,9 @@ class MyApp extends StatelessWidget {
                       final locale = getPrimaryLocale(WidgetsBinding.instance);
                       // You can access the controller using the
                       // `AutoTranslationScope.controllerOf` method.
-                      AutoTranslationScope.controllerOf(context)?.setLocale(locale);
+                      AutoTranslationScope.controllerOf(
+                        context,
+                      )?.setLocale(locale);
                     },
                     child: const Text('Default'),
                   ),
@@ -101,9 +107,8 @@ class MyApp extends StatelessWidget {
                   // Google Translate to ignore the placeholder and not
                   // translate it.
                   Text(
-                    'Welcome to this app {__DISPLAY_NAME__}||welcome_message'.tr(
-                      args: {'__DISPLAY_NAME__': 'Robert'},
-                    ),
+                    'Welcome to this app {__DISPLAY_NAME__}||welcome_message'
+                        .tr(args: {'__DISPLAY_NAME__': 'Robert'}),
                   ),
                 ],
               ),

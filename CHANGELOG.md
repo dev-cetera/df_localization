@@ -1,11 +1,14 @@
 # Changelog
 
+## [0.5.7]
+
+- Released @ 3/2025 (UTC)
+- chore: Add safety mechanism autoTranslate flag to prevent unnecessary translations that could cost money
+
 ## [0.5.6]
 
 - Released @ 3/2025 (UTC)
 - fix: Bugfix
-- chore: Add safety mechanism autoTranslate flag to prevent unnecessary translations that could cost money
-- chore: Fix bugs and update readme
 
 ## [0.5.4]
 

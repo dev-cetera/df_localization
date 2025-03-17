@@ -30,9 +30,9 @@ class AutoTranslationController<
   //
 
   final bool autoTranslate;
-  final TRemoteDatabaseInterface remoteDatabaseBroker;
-  final TCachedDatabaseInterface persistentDatabaseBroker;
-  final TTranslationInterface translationBroker;
+  final TRemoteDatabaseInterface? remoteDatabaseBroker;
+  final TCachedDatabaseInterface? persistentDatabaseBroker;
+  final TTranslationInterface? translationBroker;
   final String cacheKey;
   final String translationPath;
 
@@ -43,8 +43,8 @@ class AutoTranslationController<
   AutoTranslationController({
     this.autoTranslate = kDebugMode,
     required this.remoteDatabaseBroker,
-    required this.persistentDatabaseBroker,
-    required this.translationBroker,
+    this.persistentDatabaseBroker,
+    this.translationBroker,
     this.cacheKey = 'locale',
     this.translationPath = 'translations',
   });
@@ -88,7 +88,9 @@ class AutoTranslationController<
     final b = _loadTranslations(remoteDatabaseBroker, this.locale!).then((c) {
       final d = c ?? {};
       _pCache.set(d);
-      _saveTranslations(persistentDatabaseBroker, this.locale!, d);
+      if (persistentDatabaseBroker != null) {
+        _saveTranslations(persistentDatabaseBroker!, this.locale!, d);
+      }
       return c;
     });
     if (a == null) {
@@ -119,9 +121,8 @@ class AutoTranslationController<
           defaultValue = _pCache.value[textKey]!.to!;
         } catch (_) {
           defaultValue = textResult.defaultValue;
-          // Only attempt to translate if autoTranslate is enabled, a locale
-          // exists and in debug mode.
-          if (autoTranslate && this.locale != null) {
+          // Only attempt to translate if these conditions are met.
+          if (autoTranslate && translationBroker != null && this.locale != null) {
             _translateAndUpdateSequentally(defaultValue, textKey);
           }
         }
@@ -136,9 +137,10 @@ class AutoTranslationController<
   //
 
   Future<TTransaltionMap?> _loadTranslations(
-    DatabaseInterface databaseBroker,
+    DatabaseInterface? databaseBroker,
     Locale locale,
   ) async {
+    if (databaseBroker == null) return null;
     try {
       final path = _databasePath(translationPath, locale);
       final input = await databaseBroker.read(path).value;
@@ -190,6 +192,7 @@ class AutoTranslationController<
   Future<void> _translateAndUpdate(String defaultValue, String key) async {
     assert(this.autoTranslate, 'Auto-translation is disabled.');
     assert(this.locale != null, 'Locale is not set.');
+    assert(translationBroker != null, 'Translation broker is not set.');
 
     // Safety check #1: If the key is already being translated or has already
     // been translated, we should not attempt to translate it again. This
@@ -206,14 +209,13 @@ class AutoTranslationController<
     //   '[TranslationController._createTranslationManager] Did not get translation for key: $key. Attempting to translate...',
     // );
 
-    final translated =
-        await translationBroker
-            .translateSentence(
-              text: defaultValue,
-              languageCode: this.locale!.languageCode,
-              countryCode: this.locale!.countryCode,
-            )
-            .value;
+    final translated = await translationBroker!
+        .translateSentence(
+          text: defaultValue,
+          languageCode: this.locale!.languageCode,
+          countryCode: this.locale!.countryCode,
+        )
+        .value;
 
     // If the translation fails, no more attemps will be made since the
     // key is already added to _didRequestTranslate. This is deliberate to
@@ -233,51 +235,33 @@ class AutoTranslationController<
     final path = _databasePath(translationPath, this.locale!);
 
     // Update the persistent database.
-    final futureResult1 =
-        persistentDatabaseBroker
-            .patch(
-              path: path,
-              data: {
-                key:
-                    TranslatedText(
-                      to: translated.unwrap(),
-                      from: defaultValue,
-                    ).toMap(),
-              },
-            )
-            .value;
+    final futureResult1 = persistentDatabaseBroker?.patch(
+      path: path,
+      data: {
+        key: TranslatedText(
+          to: translated.unwrap(),
+          from: defaultValue,
+        ).toMap(),
+      },
+    ).value;
 
     // Update the remote database.ßå
-    final futureResult2 =
-        remoteDatabaseBroker
-            .patch(
-              path: path,
-              data: {
-                key:
-                    TranslatedText(
-                      to: translated.unwrap(),
-                      from: defaultValue,
-                    ).toMap(),
-              },
-            )
-            .value;
+    final futureResult2 = remoteDatabaseBroker?.patch(
+      path: path,
+      data: {
+        key: TranslatedText(
+          to: translated.unwrap(),
+          from: defaultValue,
+        ).toMap(),
+      },
+    ).value;
 
-    final results = await Future.wait([futureResult1, futureResult2]);
-
-    final result1 = results[0];
-    final result2 = results[1];
-
-    if (result1.isErr()) {
-      // debugPrint(
-      //   '[TranslationController._translateAndUpdate] Failed to update persistent database!',
-      // );
-    }
-
-    if (result2.isErr()) {
-      // debugPrint(
-      //   '[TranslationController._translateAndUpdate] Failed to update remote database!',
-      // );
-    }
+    await Future.wait(
+      [
+        if (futureResult1 != null) futureResult1,
+        if (futureResult2 != null) futureResult2,
+      ],
+    );
   }
 }
 

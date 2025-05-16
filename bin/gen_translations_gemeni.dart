@@ -20,58 +20,55 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 void main(List<String> arguments) async {
-  DebugLog.debugOnly = false;
-  printBlue('Starting generator. Please wait...');
+  Glog.stylize = true;
+  Glog.printBlue('Starting generator. Please wait...');
   // Get the arguments.
-  final parser =
-      ArgParser()
-        ..addFlag(
-          'help',
-          abbr: 'h',
-          negatable: false,
-          help: 'Show this help message.',
-        )
-        ..addOption(
-          'root',
-          abbr: 'r',
-          help: 'Root directory to search for translation keys.',
-          defaultsTo: Directory.current.path,
-        )
-        ..addOption(
-          'api_key',
-          help:
-              'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
-        )
-        ..addOption(
-          'model',
-          help: 'The Gemeni LLM to use.',
-          defaultsTo: 'gemini-1.5-flash-latest',
-        )
-        ..addOption(
-          'locale',
-          abbr: 'l',
-          help: 'Specify your locale or language, e.g. "en-us" or "English"',
-          defaultsTo: 'en-us',
-        )
-        ..addOption(
-          'output',
-          abbr: 'o',
-          help: 'Output directory path for the generated translation JSON.',
-          defaultsTo: Directory.current.path,
-        )
-        ..addOption(
-          'type',
-          abbr: 't',
-          help:
-              'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
-          defaultsTo: 'yaml',
-        );
+  final parser = ArgParser()
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Show this help message.',
+    )
+    ..addOption(
+      'root',
+      abbr: 'r',
+      help: 'Root directory to search for translation keys.',
+      defaultsTo: Directory.current.path,
+    )
+    ..addOption(
+      'api_key',
+      help: 'Obtain your API key here https://ai.google.dev/gemini-api/docs/api-key.',
+    )
+    ..addOption(
+      'model',
+      help: 'The Gemeni LLM to use.',
+      defaultsTo: 'gemini-1.5-flash-latest',
+    )
+    ..addOption(
+      'locale',
+      abbr: 'l',
+      help: 'Specify your locale or language, e.g. "en-us" or "English"',
+      defaultsTo: 'en-us',
+    )
+    ..addOption(
+      'output',
+      abbr: 'o',
+      help: 'Output directory path for the generated translation JSON.',
+      defaultsTo: Directory.current.path,
+    )
+    ..addOption(
+      'type',
+      abbr: 't',
+      help: 'Specify your output file type, e.g. "yaml", "yml", "json", "jsonc".',
+      defaultsTo: 'yaml',
+    );
 
   final argResults = parser.parse(arguments);
 
   // Print help if requested.
   if (argResults['help'] == true) {
-    printBlue(parser.usage);
+    Glog.printBlue(parser.usage);
     return;
   }
 
@@ -85,7 +82,7 @@ void main(List<String> arguments) async {
 
   // Check if the provided rootPath exists.
   if (!Directory(rootPath).existsSync()) {
-    printRed('Error! The root directory does not exist: $rootPath');
+    Glog.printRed('Error! The root directory does not exist: $rootPath');
     exit(1);
   }
 
@@ -104,7 +101,7 @@ void main(List<String> arguments) async {
         try {
           translationMap = translationMap[part] as Map<String, dynamic>;
         } catch (e) {
-          printRed(
+          Glog.printRed(
             'Error! The key “$part” is being used both as a string value and as a map (e.g., “$part”: “value” and “$part”: {“key”: “value”}). It must be one or the other. Please correct this in your code and try again.',
           );
           exit(1);
@@ -127,8 +124,7 @@ void main(List<String> arguments) async {
     final dir = Directory(rootPath);
     final systemEntities = dir.listSync(recursive: true, followLinks: false);
     for (final systemEntity in systemEntities) {
-      if (systemEntity is File &&
-          systemEntity.path.toLowerCase().endsWith('.dart')) {
+      if (systemEntity is File && systemEntity.path.toLowerCase().endsWith('.dart')) {
         final content = systemEntity.readAsStringSync();
         // See: regexr.com/86id8
         final regex = RegExp(
@@ -136,8 +132,7 @@ void main(List<String> arguments) async {
         );
         for (final match in regex.allMatches(content)) {
           final key = (match.group(2) ?? 'key_${pairs.length}');
-          final value =
-              match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
+          final value = match.group(1) ?? match.group(2) ?? 'value_${pairs.length}';
           final keyOrExisting = pairs.keys.firstWhere(
             (k) => k.toLowerCase() == key.toLowerCase(),
             orElse: () => key,
@@ -145,7 +140,7 @@ void main(List<String> arguments) async {
           if (isWord(keyOrExisting)) {
             pairs[keyOrExisting] = value;
           } else {
-            printYellow(
+            Glog.printYellow(
               'Warning! The key “$key” is not a valid word. It will be ignored.',
             );
           }
@@ -157,9 +152,7 @@ void main(List<String> arguments) async {
 
   // Collect all keys and add them to the translationMap.
   final translationMap = <String, dynamic>{};
-  final pairs =
-      collectPairs(rootPath).entries.toList()
-        ..sort((a, b) => a.key.compareTo(b.key));
+  final pairs = collectPairs(rootPath).entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   for (final pair in pairs) {
     insertPairIntoMap(translationMap, pair);
   }
@@ -183,20 +176,19 @@ void main(List<String> arguments) async {
   Map<String, dynamic> checked;
   try {
     final input = const JsonEncoder.withIndent('  ').convert(translationMap);
-    final transalted =
-        apiKey != null
-            ? await translateWithGemeni(
-              data: input,
-              apiKey: apiKey,
-              gemeniModel: model,
-              locale: locale,
-            )
-            : input;
+    final transalted = apiKey != null
+        ? await translateWithGemeni(
+            data: input,
+            apiKey: apiKey,
+            gemeniModel: model,
+            locale: locale,
+          )
+        : input;
 
     checked = (jsonDecode(transalted) as Map).cast<String, dynamic>();
   } catch (e) {
-    printBlue(e);
-    printRed(
+    Glog.printBlue(e);
+    Glog.printRed(
       'Error! The translation could not be generated. Please check your Gemeni API key and try again.',
     );
     exit(1);
@@ -216,7 +208,7 @@ void main(List<String> arguments) async {
   // ---------------------------------------------------------------------------
 
   // Notify end.
-  printGreen('Success! Translation file generated at: $outputFilePath');
+  Glog.printGreen('Success! Translation file generated at: $outputFilePath');
 }
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░

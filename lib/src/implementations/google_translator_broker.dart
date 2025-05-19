@@ -14,12 +14,14 @@ import '/_common.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String>> {
+class GoogleTranslatorBroker
+    extends TranslatorInterface<MapEntry<String, String>> {
   //
   //
   //
 
-  const GoogleTranslatorBroker({required super.apiKey}) : assert(apiKey != null);
+  const GoogleTranslatorBroker({required super.apiKey})
+    : assert(apiKey != null);
 
   //
   //
@@ -31,7 +33,8 @@ class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String
     required String languageCode,
     required String? countryCode,
   }) {
-    final input = {'q': text, 'target': languageCode, 'format': 'text'}.entries.toList();
+    final input =
+        {'q': text, 'target': languageCode, 'format': 'text'}.entries.toList();
     return translate(contents: input);
   }
 
@@ -51,14 +54,13 @@ class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String
         body: jsonEncode(Map.fromEntries(contents)),
       );
       if (response.statusCode != 200) {
-        throw Err(
-          response.body,
-          statusCode: response.statusCode,
-        );
+        throw Err(response.body, statusCode: response.statusCode);
       }
-      final result = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      )?['data']?['translations']?[0]?['translatedText'] as String;
+      final result =
+          jsonDecode(
+                utf8.decode(response.bodyBytes),
+              )?['data']?['translations']?[0]?['translatedText']
+              as String;
       return result;
     });
   }

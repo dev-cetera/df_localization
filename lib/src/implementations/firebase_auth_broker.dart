@@ -38,10 +38,7 @@ class FirebaseAuthBroker extends AuthInterface {
         }),
       );
       if (response.statusCode != 200) {
-        throw Err(
-          response.body,
-          statusCode: response.statusCode,
-        );
+        throw Err(response.body, statusCode: response.statusCode);
       }
       final idToken = jsonDecode(response.body)['idToken'] as String;
       return LoginResult(idToken: idToken);

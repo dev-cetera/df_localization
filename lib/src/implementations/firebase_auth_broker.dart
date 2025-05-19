@@ -39,8 +39,7 @@ class FirebaseAuthBroker extends AuthInterface {
       );
       if (response.statusCode != 200) {
         throw Err(
-          debugPath: ['FirebaseAuth', 'logInWithEmailAndPassword'],
-          error: response.body,
+          response.body,
           statusCode: response.statusCode,
         );
       }

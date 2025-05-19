@@ -80,8 +80,7 @@ class ClaudeTranslatorBroker extends TranslatorInterface<ClaudeContent> {
 
       if (response.statusCode != 200) {
         throw Err(
-          debugPath: ['ClaudeTranslator', 'translate'],
-          error: response.body,
+          response.body,
           statusCode: response.statusCode,
         );
       }

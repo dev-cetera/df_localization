@@ -42,8 +42,7 @@ class PersistentDatabaseBroker extends DatabaseInterface {
       final jsonString = prefs.getString(path);
       if (jsonString == null) {
         throw Err(
-          debugPath: ['PersistentStorage', 'read'],
-          error: 'No data found at path: $path',
+          'No data found at path: $path',
         );
       }
       return jsonDecode(jsonString) as Map<String, dynamic>;
@@ -64,8 +63,7 @@ class PersistentDatabaseBroker extends DatabaseInterface {
       final result = await prefs.setString(path, jsonEncode(data));
       if (!result) {
         throw Err(
-          debugPath: ['PersistentStorage', 'write'],
-          error: 'Failed to write data at path: $path',
+          'Failed to write data at path: $path',
         );
       }
       return const None();
@@ -96,8 +94,7 @@ class PersistentDatabaseBroker extends DatabaseInterface {
       final result = await prefs.setString(path, jsonEncode(mergedData));
       if (!result) {
         throw Err(
-          debugPath: ['PersistentStorage', 'patch'],
-          error: 'Failed to patch data at path: $path',
+          'Failed to patch data at path: $path',
         );
       }
       return const None();

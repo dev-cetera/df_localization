@@ -23,23 +23,36 @@ Map<String, dynamic> convertToLocalJson(Map<String, dynamic> firestoreJson) {
 dynamic convertToLocalValue(dynamic value) {
   if (value is Map) {
     if (value.containsKey('mapValue')) {
-      return convertToLocalJson(
-        value['mapValue']['fields'] as Map<String, dynamic>,
-      );
+      final out = value['mapValue']['fields'] as Map<String, dynamic>?;
+      if (out == null) {
+        return null;
+      }
+      return convertToLocalJson(out);
     } else if (value.containsKey('arrayValue')) {
-      return (value['arrayValue']['values'])
-          .map((dynamic e) => convertToLocalValue(e))
-          .toList();
+      final out = (value['arrayValue']['values']) as Iterable<dynamic>?;
+      return out?.map((dynamic e) => convertToLocalValue(e)).toList();
     } else if (value.containsKey('stringValue')) {
       return value['stringValue'];
     } else if (value.containsKey('integerValue')) {
-      return int.parse(value['integerValue'] as String);
+      final out = value['integerValue'] as String?;
+      if (out == null) {
+        return null;
+      }
+      return int.tryParse(out);
     } else if (value.containsKey('doubleValue')) {
-      return double.parse(value['doubleValue'] as String);
+      final out = value['doubleValue'] as String?;
+      if (out == null) {
+        return null;
+      }
+      return double.tryParse(out);
     } else if (value.containsKey('booleanValue')) {
       return value['booleanValue'] == true;
     } else if (value.containsKey('timestampValue')) {
-      return DateTime.parse(value['timestampValue'] as String);
+      final out = value['timestampValue'] as String?;
+      if (out == null) {
+        return null;
+      }
+      return DateTime.tryParse(out);
     } else if (value.containsKey('nullValue')) {
       return null;
     }

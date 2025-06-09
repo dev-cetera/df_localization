@@ -33,8 +33,11 @@ class GoogleTranslatorBroker
     required String languageCode,
     required String? countryCode,
   }) {
-    final input =
-        {'q': text, 'target': languageCode, 'format': 'text'}.entries.toList();
+    final input = {
+      'q': text,
+      'target': languageCode,
+      'format': 'text',
+    }.entries.toList();
     return translate(contents: input);
   }
 

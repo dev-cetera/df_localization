@@ -11,8 +11,7 @@
 //.title~
 
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter/widgets.dart'
-    show Locale, WidgetsBinding, visibleForTesting;
+import 'package:flutter/widgets.dart' show Locale, WidgetsBinding, visibleForTesting;
 
 import '/_common.dart';
 
@@ -88,21 +87,21 @@ final class TranslationController {
     final fallbackLocale = WidgetsBinding.instance.platformDispatcher.locale;
     return SharedPod<Locale, String>(
       cacheKey,
-      fromValue: (localeString) async {
+      fromValue: (localeString) {
         final locale = localeFromString(localeString) ?? fallbackLocale;
         _read(locale);
         return locale;
       },
-      toValue: (locale) async {
+      toValue: (locale) {
         _read(locale);
-        return getNormalizedLangaugeTag(locale ?? fallbackLocale);
+        return getNormalizedLanguageTag(locale);
       },
       initialValue: fallbackLocale,
     );
   }
 
   void _read(Locale? locale) async {
-    final languageTag = getNormalizedLangaugeTag(locale ?? fallbackLocale);
+    final languageTag = getNormalizedLanguageTag(locale ?? fallbackLocale);
     try {
       await _reader.read(languageTag);
     } catch (e) {

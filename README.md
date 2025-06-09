@@ -100,7 +100,7 @@ Widget build(BuildContext context) {
                   child: const Text('German (DE)'),
                 ),
                 // This will display "Welcome to this app Robert" if the
-                // translation is not available or the langauge is English.
+                // translation is not available or the language is English.
                 //
                 // The key "welcome_message" is optional and is uses as an
                 // identifier for the translation. If the key is not provided,
@@ -131,7 +131,7 @@ Widget build(BuildContext context) {
 }
 ```
 
-## Example - Translating From Langauge Files:
+## Example - Translating From language Files:
 
 This method allows you to manually translate text and store translations in language files (JSON or YAML). It's ideal for scenarios where you want full control over translations or need to work offline without relying on external services.
 

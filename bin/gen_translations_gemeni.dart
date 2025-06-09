@@ -20,7 +20,6 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 void main(List<String> arguments) async {
-  Log.stylize = true;
   Log.printBlue('Starting generator. Please wait...');
   // Get the arguments.
   final parser = ArgParser()

@@ -21,10 +21,9 @@ import '/_common.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 class AutoTranslationController<
-  TRemoteDatabaseInterface extends DatabaseInterface,
-  TCachedDatabaseInterface extends DatabaseInterface,
-  TTranslationInterface extends TranslatorInterface
-> {
+    TRemoteDatabaseInterface extends DatabaseInterface,
+    TCachedDatabaseInterface extends DatabaseInterface,
+    TTranslationInterface extends TranslatorInterface> {
   //
   //
   //
@@ -56,9 +55,9 @@ class AutoTranslationController<
   final _pCache = Pod<TTransaltionMap>({});
   ValueListenable<TTransaltionMap> get pCache => _pCache;
 
-  SharedPod<Locale?, String>? _pLocale;
+  SharedPod<Locale, String>? _pLocale;
   ValueListenable<Locale?> get pLocale => _pLocale!;
-  Locale? get locale => _pLocale!.value!;
+  Locale? get locale => _pLocale?.getValue();
 
   //
   //
@@ -118,13 +117,11 @@ class AutoTranslationController<
         final textKey = textResult.key;
         String defaultValue;
         try {
-          defaultValue = _pCache.value[textKey]!.to!;
+          defaultValue = _pCache.getValue()[textKey]!.to!;
         } catch (_) {
           defaultValue = textResult.defaultValue;
-          // Only attempt to translate if these conditions are met.
-          if (autoTranslate &&
-              translationBroker != null &&
-              this.locale != null) {
+          // Only attempt to translagte if these conditions are met.
+          if (autoTranslate && translationBroker != null && this.locale != null) {
             _translateAndUpdateSequentally(defaultValue, textKey);
           }
         }
@@ -204,21 +201,20 @@ class AutoTranslationController<
 
     // Safety check #2: If the key is already in the cache, we should not
     // attempt to translate it again.
-    final test = _pCache.value[key]?.to;
+    final test = _pCache.getValue()[key]?.to;
     if (test != null) return;
 
     // debugPrint(
     //   '[TranslationController._createTranslationManager] Did not get translation for key: $key. Attempting to translate...',
     // );
 
-    final translated =
-        await translationBroker!
-            .translateSentence(
-              text: defaultValue,
-              languageCode: this.locale!.languageCode,
-              countryCode: this.locale!.countryCode,
-            )
-            .value;
+    final translated = await translationBroker!
+        .translateSentence(
+          text: defaultValue,
+          languageCode: this.locale!.languageCode,
+          countryCode: this.locale!.countryCode,
+        )
+        .value;
 
     // If the translation fails, no more attemps will be made since the
     // key is already added to _didRequestTranslate. This is deliberate to
@@ -227,45 +223,36 @@ class AutoTranslationController<
 
     // Update the cache in memory with the translated text.
     _pCache.update(
-      (e) =>
-          e
-            ..[key] = TranslatedText(
-              to: translated.unwrap(),
-              from: defaultValue,
-            ),
+      (e) => e
+        ..[key] = TranslatedText(
+          to: translated.unwrap(),
+          from: defaultValue,
+        ),
     );
 
     final path = _databasePath(translationPath, this.locale!);
 
     // Update the persistent database.
-    final futureResult1 =
-        persistentDatabaseBroker
-            ?.patch(
-              path: path,
-              data: {
-                key:
-                    TranslatedText(
-                      to: translated.unwrap(),
-                      from: defaultValue,
-                    ).toMap(),
-              },
-            )
-            .value;
+    final futureResult1 = persistentDatabaseBroker?.patch(
+      path: path,
+      data: {
+        key: TranslatedText(
+          to: translated.unwrap(),
+          from: defaultValue,
+        ).toMap(),
+      },
+    ).value;
 
     // Update the remote database.ßå
-    final futureResult2 =
-        remoteDatabaseBroker
-            ?.patch(
-              path: path,
-              data: {
-                key:
-                    TranslatedText(
-                      to: translated.unwrap(),
-                      from: defaultValue,
-                    ).toMap(),
-              },
-            )
-            .value;
+    final futureResult2 = remoteDatabaseBroker?.patch(
+      path: path,
+      data: {
+        key: TranslatedText(
+          to: translated.unwrap(),
+          from: defaultValue,
+        ).toMap(),
+      },
+    ).value;
 
     await Future.wait([
       if (futureResult1 != null) futureResult1,
@@ -280,11 +267,11 @@ SharedPod<Locale, String> _createLocalePod({required String cacheKey}) {
   final fallbackLocale = WidgetsBinding.instance.platformDispatcher.locale;
   return SharedPod<Locale, String>(
     cacheKey,
-    fromValue: (localeString) async {
+    fromValue: (localeString) {
       return localeFromString(localeString) ?? fallbackLocale;
     },
-    toValue: (locale) async {
-      return getNormalizedLangaugeTag(locale ?? fallbackLocale);
+    toValue: (locale) {
+      return getNormalizedLanguageTag(locale);
     },
     initialValue: fallbackLocale,
   );
@@ -329,7 +316,7 @@ Map<String, dynamic> _convertTo(TTransaltionMap input) {
 String _databasePath(String translationPath, Locale locale) {
   assert(translationPath.isNotEmpty);
   final parts = translationPath.split(RegExp(r'[/\\]'));
-  final path = [...parts, getNormalizedLangaugeTag(locale)].join('/');
+  final path = [...parts, getNormalizedLanguageTag(locale)].join('/');
   return path;
 }
 

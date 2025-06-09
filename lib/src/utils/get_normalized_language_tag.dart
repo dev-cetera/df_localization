@@ -14,6 +14,6 @@ import 'package:flutter/widgets.dart' show Locale;
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-String getNormalizedLangaugeTag(Locale locale) {
+String getNormalizedLanguageTag(Locale locale) {
   return locale.toLanguageTag().toLowerCase();
 }

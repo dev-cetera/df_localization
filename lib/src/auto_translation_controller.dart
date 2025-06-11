@@ -173,7 +173,7 @@ class AutoTranslationController<
   //
 
   // Ensures translateAndUpdate is called sequentially.
-  final _translationSeq = Sequential();
+  final _translationSeq = SafeSequencer();
 
   // Ensures translateAndUpdate is called only once per key. This gets
   // reset in setLocale.

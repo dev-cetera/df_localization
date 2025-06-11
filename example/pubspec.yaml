@@ -12,6 +12,6 @@ dependencies:
   df_localization:
     path: ../
   df_config: ^0.7.1
-  df_safer_dart: ^0.11.1
+  df_safer_dart: ^0.13.7
 dev_dependencies:
   flutter_lints: ^6.0.0

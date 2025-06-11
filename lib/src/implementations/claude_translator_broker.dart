@@ -79,7 +79,7 @@ class ClaudeTranslatorBroker extends TranslatorInterface<ClaudeContent> {
       final response = await post(url, headers: headers, body: body);
 
       if (response.statusCode != 200) {
-        throw Err(response.body, statusCode: response.statusCode);
+        throw Err(response.body, statusCode: Some(response.statusCode));
       }
 
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));

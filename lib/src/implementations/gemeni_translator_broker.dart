@@ -85,12 +85,10 @@ class GeminiTranslatorBroker extends TranslatorInterface<GemeniContent> {
       );
 
       if (response.statusCode != 200) {
-        throw Err(response.body, statusCode: response.statusCode);
+        throw Err(response.body, statusCode: Some(response.statusCode));
       }
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));
-      final translatedText =
-          responseData['candidates'][0]['content']['parts'][0]['text']
-              as String;
+      final translatedText = responseData['candidates'][0]['content']['parts'][0]['text'] as String;
       return translatedText;
     });
   }
@@ -106,9 +104,9 @@ final class GemeniContent {
   const GemeniContent.model(this.text) : role = 'model';
 
   Map<String, dynamic> toJson() => {
-    'role': role,
-    'parts': {'text': text},
-  };
+        'role': role,
+        'parts': {'text': text},
+      };
 }
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░

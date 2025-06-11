@@ -72,12 +72,11 @@ class OpenAITranslatorBroker extends TranslatorInterface<OpenAIContent> {
 
       final response = await post(url, headers: headers, body: body);
       if (response.statusCode != 200) {
-        throw Err(response.body, statusCode: response.statusCode);
+        throw Err(response.body, statusCode: Some(response.statusCode));
       }
       return jsonDecode(
-            utf8.decode(response.bodyBytes),
-          )['choices'][0]['message']['content']
-          as String;
+        utf8.decode(response.bodyBytes),
+      )['choices'][0]['message']['content'] as String;
     });
   }
 }

@@ -55,7 +55,7 @@ class GoogleTranslatorBroker extends TranslatorInterface<MapEntry<String, String
         body: jsonEncode(Map.fromEntries(contents)),
       );
       if (response.statusCode != 200) {
-        throw Err(response.body, statusCode: Some(response.statusCode));
+        throw Err(response.body, statusCode: response.statusCode);
       }
       final result = jsonDecode(
         utf8.decode(response.bodyBytes),

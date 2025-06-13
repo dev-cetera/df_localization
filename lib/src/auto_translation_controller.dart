@@ -183,9 +183,9 @@ class AutoTranslationController<
     String defaultValue,
     String key,
   ) async {
-    await _translationSeq.add((_) async {
+    await _translationSeq.add(() async {
       await _translateAndUpdate(defaultValue, key);
-    }).value;
+    });
   }
 
   Future<void> _translateAndUpdate(String defaultValue, String key) async {

@@ -11,6 +11,10 @@
 ##.title~
 
 name: gen_translations_gemeni
+homepage: https://dev-cetera.com/
+repository: https://github.com/robmllze/df_localization
+funding:
+  - https://www.buymeacoffee.com/dev_cetera
 
 ## -----------------------------------------------------------------------------
 
@@ -23,7 +27,7 @@ dependencies:
   path: ^1.9.1
   args: ^2.7.0
   yaml: ^3.1.3
-  df_log: ^0.3.10
+  df_log: ^0.3.12
   google_generative_ai: ^0.4.7
 
 ## -----------------------------------------------------------------------------
@@ -31,3 +35,4 @@ dependencies:
 dev_dependencies:
   df_localization:
     path: ../
+

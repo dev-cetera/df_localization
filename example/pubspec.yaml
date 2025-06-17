@@ -1,17 +1,22 @@
 name: example
+homepage: https://dev-cetera.com/
+repository: https://github.com/robmllze/df_localization
+funding:
+  - https://www.buymeacoffee.com/dev_cetera
 publish_to: 'none'
 environment:
-  sdk: ^3.7.0
+  sdk: ">=3.5.0 <4.0.0"
 dependencies:
   flutter:
     sdk: flutter
-  df_pod: ^0.16.10
+  df_pod: ^0.18.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   http: ^1.4.0
   df_localization:
     path: ../
-  df_config: ^0.7.1
+  df_config: ^0.7.2
   df_safer_dart: ^0.14.10
 dev_dependencies:
   flutter_lints: ^6.0.0
+

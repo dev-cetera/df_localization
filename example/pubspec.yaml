@@ -9,13 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  df_pod: ^0.18.2
+  df_pod: ^0.18.3
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   http: ^1.4.0
   df_localization:
     path: ../
-  df_config: ^0.7.2
+  df_config: ^0.7.3
   df_safer_dart: ^0.14.10
 dev_dependencies:
   flutter_lints: ^6.0.0

@@ -27,7 +27,7 @@ dependencies:
   path: ^1.9.1
   args: ^2.7.0
   yaml: ^3.1.3
-  df_log: ^0.3.12
+  df_log: ^0.3.13
   google_generative_ai: ^0.4.7
 
 ## -----------------------------------------------------------------------------
@@ -35,4 +35,5 @@ dependencies:
 dev_dependencies:
   df_localization:
     path: ../
+  lints: ^6.0.0
 

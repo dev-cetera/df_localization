@@ -16,7 +16,7 @@ repository: https://github.com/robmllze/df_localization
 funding:
   - https://www.buymeacoffee.com/dev_cetera
 description: A package that simplifies adding localization to your Flutter app.
-version: 0.5.16
+version: 0.5.17
 topics:
   - configuration
   - locale
@@ -35,9 +35,9 @@ dependencies:
   flutter:
     sdk: flutter
 
-  df_config: ^0.7.2
-  df_log: ^0.3.12
-  df_pod: ^0.18.3
+  df_config: ^0.7.3
+  df_log: ^0.3.13
+  df_pod: ^0.18.4
   df_safer_dart: ^0.14.10
   http: ^1.4.0
   shared_preferences: ^2.5.3

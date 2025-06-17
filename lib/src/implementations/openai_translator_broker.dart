@@ -75,8 +75,9 @@ class OpenAITranslatorBroker extends TranslatorInterface<OpenAIContent> {
         throw Err(response.body, statusCode: response.statusCode);
       }
       return jsonDecode(
-        utf8.decode(response.bodyBytes),
-      )['choices'][0]['message']['content'] as String;
+            utf8.decode(response.bodyBytes),
+          )['choices'][0]['message']['content']
+          as String;
     });
   }
 }

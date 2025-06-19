@@ -4,7 +4,7 @@
 Dart & Flutter Packages by dev-cetera.com & contributors.
 
 [![pub](https://img.shields.io/pub/v/df_localization.svg)](https://pub.dev/packages/df_localization)
-[![tag](https://img.shields.io/badge/tag-v0.5.17-purple)](https://github.com/dev-cetera/df_localization/tree/v0.5.17)
+[![tag](https://img.shields.io/badge/tag-v0.5.18-purple)](https://github.com/dev-cetera/df_localization/tree/v0.5.18)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/dev-cetera/df_localization/main/LICENSE)
 
 ---
@@ -238,7 +238,7 @@ hello-world: Hallo Welt
 
 ---
 
-☝️ Please refer to the [API reference](https://pub.dev/documentation/df_localization/) for more information.
+Please refer to the [API reference](https://pub.dev/documentation/df_localization/) for more information.
 
 ---
 
@@ -265,7 +265,6 @@ If you're enjoying this package and find it valuable, consider showing your appr
 
 <a href="https://www.buymeacoffee.com/dev_cetera" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" height="40"></a>
 
-## 🧑‍⚖️ License
+## License
 
 This project is released under the [MIT License](https://raw.githubusercontent.com/dev-cetera/df_localization/main/LICENSE). See [LICENSE](https://raw.githubusercontent.com/dev-cetera/df_localization/main/LICENSE) for more information.
-

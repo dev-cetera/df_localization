@@ -38,7 +38,7 @@ dependencies:
   df_config: ^0.7.3
   df_log: ^0.3.17
   df_pod: ^0.18.4
-  df_safer_dart: ^0.15.2
+  df_safer_dart: ^0.15.8
   http: ^1.4.0
   shared_preferences: ^2.5.3
   args: ^2.7.0

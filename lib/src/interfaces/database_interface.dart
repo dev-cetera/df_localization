@@ -19,7 +19,7 @@ abstract class DatabaseInterface {
 
   Async<Map<String, dynamic>> read(String path);
 
-  Async<None> write({required String path, required Map<String, dynamic> data});
+  Async<Unit> write({required String path, required Map<String, dynamic> data});
 
-  Async<None> patch({required String path, required Map<String, dynamic> data});
+  Async<Unit> patch({required String path, required Map<String, dynamic> data});
 }

@@ -53,7 +53,7 @@ class FirestoreDatabseBroker extends DatabaseInterface {
   //
 
   @override
-  Async<None> write({
+  Async<Unit> write({
     required String path,
     required Map<String, dynamic> data,
   }) {
@@ -77,7 +77,7 @@ class FirestoreDatabseBroker extends DatabaseInterface {
       if (response.statusCode != 200) {
         throw Err(response.body, statusCode: response.statusCode);
       }
-      return const None();
+      return Unit();
     });
   }
 
@@ -86,7 +86,7 @@ class FirestoreDatabseBroker extends DatabaseInterface {
   //
 
   @override
-  Async<None> patch({
+  Async<Unit> patch({
     required String path,
     required Map<String, dynamic> data,
   }) {
@@ -95,9 +95,7 @@ class FirestoreDatabseBroker extends DatabaseInterface {
       if (segmentsResult.isErr()) {
         throw segmentsResult;
       }
-      final updateMask = data.keys
-          .map((key) => 'updateMask.fieldPaths=%60$key%60')
-          .join('&');
+      final updateMask = data.keys.map((key) => 'updateMask.fieldPaths=%60$key%60').join('&');
       final uri = '$_baseUrl/$path?$updateMask';
       final url = Uri.parse(uri);
       final body = jsonEncode({'fields': convertToFirestoreJson(data)});
@@ -110,7 +108,7 @@ class FirestoreDatabseBroker extends DatabaseInterface {
       if (response.statusCode != 200) {
         throw Err(response.body, statusCode: response.statusCode);
       }
-      return const None();
+      return Unit();
     });
   }
 
@@ -123,9 +121,9 @@ class FirestoreDatabseBroker extends DatabaseInterface {
 
   @pragma('vm:prefer-inline')
   Map<String, String> get _authHeaders => {
-    if (accessToken != null) 'Authorization': 'Bearer $accessToken',
-    'Content-Type': 'application/json',
-  };
+        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      };
 
   Result<List<String>> _getSegments(String path) {
     final segments = path.split('/');

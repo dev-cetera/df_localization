@@ -52,7 +52,7 @@ class PersistentDatabaseBroker extends DatabaseInterface {
   //
 
   @override
-  Async<None> write({
+  Async<Unit> write({
     required String path,
     required Map<String, dynamic> data,
   }) {
@@ -62,7 +62,7 @@ class PersistentDatabaseBroker extends DatabaseInterface {
       if (!result) {
         throw Err('Failed to write data at path: $path');
       }
-      return const None();
+      return Unit();
     });
   }
 
@@ -71,7 +71,7 @@ class PersistentDatabaseBroker extends DatabaseInterface {
   //
 
   @override
-  Async<None> patch({
+  Async<Unit> patch({
     required String path,
     required Map<String, dynamic> data,
   }) {
@@ -91,7 +91,7 @@ class PersistentDatabaseBroker extends DatabaseInterface {
       if (!result) {
         throw Err('Failed to patch data at path: $path');
       }
-      return const None();
+      return Unit();
     });
   }
 }

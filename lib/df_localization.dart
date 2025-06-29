@@ -17,4 +17,3 @@ export 'src/_src.g.dart';
 
 export 'package:df_config/df_config.dart';
 export 'package:df_pod/df_pod.dart';
-export 'package:df_safer_dart/df_safer_dart.dart';

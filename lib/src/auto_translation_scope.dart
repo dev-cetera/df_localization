@@ -93,7 +93,7 @@ class _AutoTranslationScopeState extends State<AutoTranslationScope> {
   //
   //
 
-  late final Future<ValueListenable<TTransaltionMap>> _pCache;
+  late final Future<GenericPod<TTransaltionMap>> _pCache;
 
   //
   //

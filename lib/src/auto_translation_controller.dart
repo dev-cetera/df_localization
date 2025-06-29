@@ -21,10 +21,9 @@ import '/_common.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 class AutoTranslationController<
-  TRemoteDatabaseInterface extends DatabaseInterface,
-  TCachedDatabaseInterface extends DatabaseInterface,
-  TTranslationInterface extends TranslatorInterface
-> {
+    TRemoteDatabaseInterface extends DatabaseInterface,
+    TCachedDatabaseInterface extends DatabaseInterface,
+    TTranslationInterface extends TranslatorInterface> {
   //
   //
   //
@@ -54,11 +53,11 @@ class AutoTranslationController<
   //
 
   final _pCache = Pod<TTransaltionMap>({});
-  ValueListenable<TTransaltionMap> get pCache => _pCache;
+  GenericPod<TTransaltionMap> get pCache => _pCache;
 
-  SharedPod<Locale, String>? _pLocale;
-  ValueListenable<Locale?> get pLocale => _pLocale!;
-  Locale? get locale => _pLocale?.getValue();
+  late final _pLocale = _createLocalePod(cacheKey: cacheKey);
+  GenericPod<Locale> get pLocale => _pLocale;
+  Locale? get locale => _pLocale.getValue();
 
   //
   //
@@ -78,11 +77,11 @@ class AutoTranslationController<
 
   Future<void> setLocale(Locale? locale) async {
     _didRequestTranslate.clear();
-    await _initLocalePod();
+    await _pLocale.refresh();
     if (locale != null) {
-      await _pLocale!.set(locale);
+      await _pLocale.set(locale);
     } else if (this.locale == null) {
-      await _pLocale!.set(WidgetsBinding.instance.platformDispatcher.locale);
+      await _pLocale.set(WidgetsBinding.instance.platformDispatcher.locale);
     }
     final a = await _loadTranslations(persistentDatabaseBroker, this.locale!);
     final b = _loadTranslations(remoteDatabaseBroker, this.locale!).then((c) {
@@ -102,12 +101,6 @@ class AutoTranslationController<
     _didInit = true;
   }
 
-  Future<void> _initLocalePod() async {
-    if (_pLocale != null) return;
-    _pLocale = _createLocalePod(cacheKey: cacheKey);
-    await _pLocale!.refresh();
-  }
-
   //
   //
   //
@@ -122,10 +115,8 @@ class AutoTranslationController<
         } catch (_) {
           defaultValue = textResult.defaultValue;
           // Only attempt to translagte if these conditions are met.
-          if (autoTranslate &&
-              translationBroker != null &&
-              this.locale != null) {
-            _translateAndUpdateSequentally(defaultValue, textKey);
+          if (autoTranslate && translationBroker != null && this.locale != null) {
+            _throttle.run(() => _translateAndUpdate(defaultValue, textKey));
           }
         }
         return defaultValue;
@@ -175,21 +166,11 @@ class AutoTranslationController<
   //
   //
 
-  // Ensures translateAndUpdate is called sequentially.
-  final _translationSeq = SafeSequencer();
+  final _throttle = Throttle(const Duration(microseconds: 500));
 
   // Ensures translateAndUpdate is called only once per key. This gets
   // reset in setLocale.
   final _didRequestTranslate = <String>{};
-
-  Future<void> _translateAndUpdateSequentally(
-    String defaultValue,
-    String key,
-  ) async {
-    await _translationSeq.add(() async {
-      await _translateAndUpdate(defaultValue, key);
-    });
-  }
 
   Future<void> _translateAndUpdate(String defaultValue, String key) async {
     assert(this.autoTranslate, 'Auto-translation is disabled.');
@@ -226,37 +207,32 @@ class AutoTranslationController<
 
     // Update the cache in memory with the translated text.
     _pCache.update(
-      (e) => e
-        ..[key] = TranslatedText(to: translated.unwrap(), from: defaultValue),
+      (e) => e..[key] = TranslatedText(to: translated.unwrap(), from: defaultValue),
     );
 
     final path = _databasePath(translationPath, this.locale!);
 
     // Update the persistent database.
-    final futureResult1 = persistentDatabaseBroker
-        ?.patch(
-          path: path,
-          data: {
-            key: TranslatedText(
-              to: translated.unwrap(),
-              from: defaultValue,
-            ).toMap(),
-          },
-        )
-        .value;
+    final futureResult1 = persistentDatabaseBroker?.patch(
+      path: path,
+      data: {
+        key: TranslatedText(
+          to: translated.unwrap(),
+          from: defaultValue,
+        ).toMap(),
+      },
+    ).value;
 
     // Update the remote database.ßå
-    final futureResult2 = remoteDatabaseBroker
-        ?.patch(
-          path: path,
-          data: {
-            key: TranslatedText(
-              to: translated.unwrap(),
-              from: defaultValue,
-            ).toMap(),
-          },
-        )
-        .value;
+    final futureResult2 = remoteDatabaseBroker?.patch(
+      path: path,
+      data: {
+        key: TranslatedText(
+          to: translated.unwrap(),
+          from: defaultValue,
+        ).toMap(),
+      },
+    ).value;
 
     await Future.wait([
       if (futureResult1 != null) futureResult1,

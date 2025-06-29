@@ -18,7 +18,6 @@ abstract class TranslatorInterface<T extends Object> {
   final String? apiKey;
 
   const TranslatorInterface({this.apiKey});
-
   Async<String> translateSentence({
     required String text,
     required String languageCode,

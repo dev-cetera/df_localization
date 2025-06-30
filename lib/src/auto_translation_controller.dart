@@ -21,10 +21,9 @@ import '/_common.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 class AutoTranslationController<
-  TRemoteDatabaseInterface extends DatabaseInterface,
-  TCachedDatabaseInterface extends DatabaseInterface,
-  TTranslationInterface extends TranslatorInterface
-> {
+    TRemoteDatabaseInterface extends DatabaseInterface,
+    TCachedDatabaseInterface extends DatabaseInterface,
+    TTranslationInterface extends TranslatorInterface> {
   //
   //
   //
@@ -89,7 +88,7 @@ class AutoTranslationController<
       final d = c ?? {};
       _pCache.set(d);
       if (persistentDatabaseBroker != null) {
-        _saveTranslations(persistentDatabaseBroker!, this.locale!, d);
+        _saveTranslations(persistentDatabaseBroker!, this.locale!, d).end();
       }
       return c;
     });
@@ -116,9 +115,7 @@ class AutoTranslationController<
         } catch (_) {
           defaultValue = textResult.defaultValue;
           // Only attempt to translagte if these conditions are met.
-          if (autoTranslate &&
-              translationBroker != null &&
-              this.locale != null) {
+          if (autoTranslate && translationBroker != null && this.locale != null) {
             _throttle.run(() => _translateAndUpdate(defaultValue, textKey));
           }
         }
@@ -141,6 +138,7 @@ class AutoTranslationController<
       final path = _databasePath(translationPath, locale);
       final input = await databaseBroker.read(path).value;
       if (input.isErr()) return null;
+      UNSAFE:
       final fields = _convertFrom(input.unwrap());
       return fields;
     } catch (_) {
@@ -176,76 +174,74 @@ class AutoTranslationController<
   final _didRequestTranslate = <String>{};
 
   Future<void> _translateAndUpdate(String defaultValue, String key) async {
-    assert(this.autoTranslate, 'Auto-translation is disabled.');
-    assert(this.locale != null, 'Locale is not set.');
-    assert(translationBroker != null, 'Translation broker is not set.');
+    UNSAFE:
+    {
+      assert(this.autoTranslate, 'Auto-translation is disabled.');
+      assert(this.locale != null, 'Locale is not set.');
+      assert(translationBroker != null, 'Translation broker is not set.');
 
-    // Safety check #1: If the key is already being translated or has already
-    // been translated, we should not attempt to translate it again. This
-    // check is necessary to prevent excessive API calls.
-    if (_didRequestTranslate.contains(key)) return;
-    _didRequestTranslate.add(key);
+      // Safety check #1: If the key is already being translated or has already
+      // been translated, we should not attempt to translate it again. This
+      // check is necessary to prevent excessive API calls.
+      if (_didRequestTranslate.contains(key)) return;
+      _didRequestTranslate.add(key);
 
-    // Safety check #2: If the key is already in the cache, we should not
-    // attempt to translate it again.
-    final test = _pCache.getValue()[key]?.to;
-    if (test != null) return;
+      // Safety check #2: If the key is already in the cache, we should not
+      // attempt to translate it again.
+      final test = _pCache.getValue()[key]?.to;
+      if (test != null) return;
 
-    // debugPrint(
-    //   '[TranslationController._createTranslationManager] Did not get translation for key: $key. Attempting to translate...',
-    // );
+      // debugPrint(
+      //   '[TranslationController._createTranslationManager] Did not get translation for key: $key. Attempting to translate...',
+      // );
 
-    final translated = await translationBroker!
-        .translateSentence(
-          text: defaultValue,
-          languageCode: this.locale!.languageCode,
-          countryCode: this.locale!.countryCode,
-        )
-        .value;
+      final translated = await translationBroker!
+          .translateSentence(
+            text: defaultValue,
+            languageCode: this.locale!.languageCode,
+            countryCode: this.locale!.countryCode,
+          )
+          .value;
 
-    // If the translation fails, no more attemps will be made since the
-    // key is already added to _didRequestTranslate. This is deliberate to
-    // prevent excessive API calls.
-    if (translated.isErr()) return;
+      // If the translation fails, no more attemps will be made since the
+      // key is already added to _didRequestTranslate. This is deliberate to
+      // prevent excessive API calls.
+      if (translated.isErr()) return;
 
-    // Update the cache in memory with the translated text.
-    _pCache.update(
-      (e) => e
-        ..[key] = TranslatedText(to: translated.unwrap(), from: defaultValue),
-    );
+      // Update the cache in memory with the translated text.
+      _pCache.update(
+        (e) => e..[key] = TranslatedText(to: translated.unwrap(), from: defaultValue),
+      );
 
-    final path = _databasePath(translationPath, this.locale!);
+      final path = _databasePath(translationPath, this.locale!);
 
-    // Update the persistent database.
-    final futureResult1 = persistentDatabaseBroker
-        ?.patch(
-          path: path,
-          data: {
-            key: TranslatedText(
-              to: translated.unwrap(),
-              from: defaultValue,
-            ).toMap(),
-          },
-        )
-        .value;
+      // Update the persistent database.
+      final futureResult1 = persistentDatabaseBroker?.patch(
+        path: path,
+        data: {
+          key: TranslatedText(
+            to: translated.unwrap(),
+            from: defaultValue,
+          ).toMap(),
+        },
+      ).value;
 
-    // Update the remote database.ßå
-    final futureResult2 = remoteDatabaseBroker
-        ?.patch(
-          path: path,
-          data: {
-            key: TranslatedText(
-              to: translated.unwrap(),
-              from: defaultValue,
-            ).toMap(),
-          },
-        )
-        .value;
+      // Update the remote database.ßå
+      final futureResult2 = remoteDatabaseBroker?.patch(
+        path: path,
+        data: {
+          key: TranslatedText(
+            to: translated.unwrap(),
+            from: defaultValue,
+          ).toMap(),
+        },
+      ).value;
 
-    await Future.wait([
-      if (futureResult1 != null) futureResult1,
-      if (futureResult2 != null) futureResult2,
-    ]);
+      await Future.wait([
+        if (futureResult1 != null) futureResult1,
+        if (futureResult2 != null) futureResult2,
+      ]);
+    }
   }
 }
 

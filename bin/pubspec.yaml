@@ -14,7 +14,9 @@ name: gen_translations_gemeni
 homepage: https://dev-cetera.com/
 repository: https://github.com/robmllze/df_localization
 funding:
-  - https://www.buymeacoffee.com/dev_cetera
+- https://www.buymeacoffee.com/dev_cetera
+- https://www.patreon.com/c/RobertMollentze
+- https://github.com/sponsors/robmllze
 
 ## -----------------------------------------------------------------------------
 

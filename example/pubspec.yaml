@@ -2,7 +2,9 @@ name: df_localization_example
 homepage: https://dev-cetera.com/
 repository: https://github.com/robmllze/df_localization
 funding:
-  - https://www.buymeacoffee.com/dev_cetera
+- https://www.buymeacoffee.com/dev_cetera
+- https://www.patreon.com/c/RobertMollentze
+- https://github.com/sponsors/robmllze
 publish_to: 'none'
 environment:
   sdk: ">=3.5.0 <4.0.0"
@@ -15,7 +17,7 @@ dependencies:
   df_localization:
     path: ../
   df_config: ^0.7.5
-  df_safer_dart: ^0.16.3
+  df_safer_dart: ^0.17.3
   df_pod: ^0.18.8
 dev_dependencies:
   flutter_lints: ^6.0.0

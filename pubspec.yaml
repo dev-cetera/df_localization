@@ -18,7 +18,7 @@ funding:
 - https://www.patreon.com/c/RobertMollentze
 - https://github.com/sponsors/robmllze
 description: A package that simplifies adding localization to your Flutter app.
-version: 0.5.21
+version: 0.5.22
 topics:
   - configuration
   - locale

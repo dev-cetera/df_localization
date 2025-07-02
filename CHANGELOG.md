@@ -4,7 +4,6 @@
 
 - Released @ 7/2025 (UTC)
 - Did some refactoring
-- Update dependencies
 
 ## [0.5.20]
 

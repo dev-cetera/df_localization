@@ -2,8 +2,9 @@
 
 ## [0.5.21]
 
-- Released @ 6/2025 (UTC)
+- Released @ 7/2025 (UTC)
 - Did some refactoring
+- Update dependencies
 
 ## [0.5.20]
 

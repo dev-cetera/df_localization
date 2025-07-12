@@ -1,9 +1,10 @@
 //.title
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //
-// Dart/Flutter (DF) Packages by dev-cetera.com & contributors. The use of this
-// source code is governed by an MIT-style license described in the LICENSE
-// file located in this project's root directory.
+// Copyright © dev-cetera.com & contributors.
+//
+// The use of this source code is governed by an MIT-style license described in
+// the LICENSE file located in this project's root directory.
 //
 // See: https://opensource.org/license/mit
 //
@@ -96,9 +97,7 @@ class FirestoreDatabseBroker extends DatabaseInterface {
       if (segmentsResult.isErr()) {
         throw segmentsResult;
       }
-      final updateMask = data.keys
-          .map((key) => 'updateMask.fieldPaths=%60$key%60')
-          .join('&');
+      final updateMask = data.keys.map((key) => 'updateMask.fieldPaths=%60$key%60').join('&');
       final uri = '$_baseUrl/$path?$updateMask';
       final url = Uri.parse(uri);
       final body = jsonEncode({'fields': convertToFirestoreJson(data)});
@@ -124,9 +123,9 @@ class FirestoreDatabseBroker extends DatabaseInterface {
 
   @pragma('vm:prefer-inline')
   Map<String, String> get _authHeaders => {
-    if (accessToken != null) 'Authorization': 'Bearer $accessToken',
-    'Content-Type': 'application/json',
-  };
+        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      };
 
   Result<List<String>> _getSegments(String path) {
     final segments = path.split('/');

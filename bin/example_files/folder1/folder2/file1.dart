@@ -15,8 +15,8 @@ import 'package:df_localization/df_localization.dart';
 
 void example() {
   'User Name||user.name'.tr(
-      //
-      );
+    //
+  );
   'User ID||user.id'
       //
       .tr();

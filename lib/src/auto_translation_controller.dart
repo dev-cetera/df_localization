@@ -22,9 +22,10 @@ import '/_common.dart';
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 class AutoTranslationController<
-    TRemoteDatabaseInterface extends DatabaseInterface,
-    TCachedDatabaseInterface extends DatabaseInterface,
-    TTranslationInterface extends TranslatorInterface> {
+  TRemoteDatabaseInterface extends DatabaseInterface,
+  TCachedDatabaseInterface extends DatabaseInterface,
+  TTranslationInterface extends TranslatorInterface
+> {
   //
   //
   //
@@ -116,7 +117,9 @@ class AutoTranslationController<
         } catch (_) {
           defaultValue = textResult.defaultValue;
           // Only attempt to translagte if these conditions are met.
-          if (autoTranslate && translationBroker != null && this.locale != null) {
+          if (autoTranslate &&
+              translationBroker != null &&
+              locale != null) {
             _throttle.run(() => _translateAndUpdate(defaultValue, textKey));
           }
         }
@@ -177,8 +180,8 @@ class AutoTranslationController<
   Future<void> _translateAndUpdate(String defaultValue, String key) async {
     UNSAFE:
     {
-      assert(this.autoTranslate, 'Auto-translation is disabled.');
-      assert(this.locale != null, 'Locale is not set.');
+      assert(autoTranslate, 'Auto-translation is disabled.');
+      assert(locale != null, 'Locale is not set.');
       assert(translationBroker != null, 'Translation broker is not set.');
 
       // Safety check #1: If the key is already being translated or has already
@@ -199,8 +202,8 @@ class AutoTranslationController<
       final translated = await translationBroker!
           .translateSentence(
             text: defaultValue,
-            languageCode: this.locale!.languageCode,
-            countryCode: this.locale!.countryCode,
+            languageCode: locale!.languageCode,
+            countryCode: locale!.countryCode,
           )
           .value;
 
@@ -211,32 +214,37 @@ class AutoTranslationController<
 
       // Update the cache in memory with the translated text.
       _pCache.update(
-        (e) => e..[key] = TranslatedText(to: translated.unwrap(), from: defaultValue),
+        (e) => e
+          ..[key] = TranslatedText(to: translated.unwrap(), from: defaultValue),
       );
 
-      final path = _databasePath(translationPath, this.locale!);
+      final path = _databasePath(translationPath, locale!);
 
       // Update the persistent database.
-      final futureResult1 = persistentDatabaseBroker?.patch(
-        path: path,
-        data: {
-          key: TranslatedText(
-            to: translated.unwrap(),
-            from: defaultValue,
-          ).toMap(),
-        },
-      ).value;
+      final futureResult1 = persistentDatabaseBroker
+          ?.patch(
+            path: path,
+            data: {
+              key: TranslatedText(
+                to: translated.unwrap(),
+                from: defaultValue,
+              ).toMap(),
+            },
+          )
+          .value;
 
       // Update the remote database.ßå
-      final futureResult2 = remoteDatabaseBroker?.patch(
-        path: path,
-        data: {
-          key: TranslatedText(
-            to: translated.unwrap(),
-            from: defaultValue,
-          ).toMap(),
-        },
-      ).value;
+      final futureResult2 = remoteDatabaseBroker
+          ?.patch(
+            path: path,
+            data: {
+              key: TranslatedText(
+                to: translated.unwrap(),
+                from: defaultValue,
+              ).toMap(),
+            },
+          )
+          .value;
 
       await Future.wait([
         if (futureResult1 != null) futureResult1,

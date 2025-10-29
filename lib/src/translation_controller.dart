@@ -12,7 +12,8 @@
 //.title~
 
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter/widgets.dart' show Locale, WidgetsBinding, visibleForTesting;
+import 'package:flutter/widgets.dart'
+    show Locale, WidgetsBinding, visibleForTesting;
 
 import '/_common.dart';
 

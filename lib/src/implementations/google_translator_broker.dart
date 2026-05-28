@@ -22,7 +22,7 @@ class GoogleTranslatorBroker
   //
 
   const GoogleTranslatorBroker({required super.apiKey})
-    : assert(apiKey != null);
+      : assert(apiKey != null);
 
   //
   //
@@ -60,11 +60,9 @@ class GoogleTranslatorBroker
       if (response.statusCode != 200) {
         throw Err(response.body, statusCode: response.statusCode);
       }
-      final result =
-          jsonDecode(
-                utf8.decode(response.bodyBytes),
-              )?['data']?['translations']?[0]?['translatedText']
-              as String;
+      final result = jsonDecode(
+        utf8.decode(response.bodyBytes),
+      )?['data']?['translations']?[0]?['translatedText'] as String;
       return result;
     });
   }

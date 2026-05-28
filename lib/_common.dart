@@ -20,3 +20,15 @@ export 'package:df_debouncer/df_debouncer.dart';
 
 export 'package:http/http.dart';
 export 'dart:convert';
+
+// AI broker types used by the LLM translator broker implementations.
+export 'package:ai_broker/ai_broker.dart'
+    show
+        AiBroker,
+        AiBrokerException,
+        AiMessage,
+        AiRole,
+        AnthropicBroker,
+        ChatRequest,
+        GeminiBroker,
+        OpenAiBroker;

@@ -1,9 +1,11 @@
 name: df_localization_example
 homepage: https://dev-cetera.com/
-repository: https://github.com/robmllze/df_localization
 funding:
-- https://www.patreon.com/c/t0mb3rr
-- https://github.com/sponsors/t0mb3rr
+- https://www.buymeacoffee.com/dev_cetera
+- https://www.patreon.com/c/robelator
+- https://github.com/sponsors/robelator
+- https://www.patreon.com/c/robelator
+- https://github.com/sponsors/robelator
 - https://www.buymeacoffee.com/dev_cetera
 
 
@@ -13,16 +15,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  http: ^1.4.0
   df_localization:
     path: ../
-  df_config: ^0.7.5
-  df_safer_dart: ^0.17.3
-  df_pod: ^0.18.10
+  df_config: ^0.8.0
+  df_safer_dart: ^0.21.0
+  df_pod: ^0.20.0
 dev_dependencies:
   flutter_lints: ^6.0.0
-  custom_lint: ^0.7.5
-  df_safer_dart_lints: ^0.3.3
+  custom_lint: ^0.8.1
+  df_safer_dart_lints: ^0.5.2
 

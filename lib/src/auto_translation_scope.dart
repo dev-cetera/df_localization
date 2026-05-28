@@ -94,7 +94,7 @@ class _AutoTranslationScopeState extends State<AutoTranslationScope> {
   //
   //
 
-  late final Future<GenericPod<TTransaltionMap>> _pCache;
+  late final Future<GenericPod<TTranslationMap>> _pCache;
 
   //
   //
@@ -121,8 +121,7 @@ class _AutoTranslationScopeState extends State<AutoTranslationScope> {
         final value = snapshot.value;
         final child = snapshot.child;
         return SizedBox(
-          child:
-              (value.isSome()
+          child: (value.isSome()
                   ? widget.builder?.call(context, child)
                   : widget.initializingBuilder?.call(context, child)) ??
               child,
@@ -162,5 +161,7 @@ class _AutoTranslationScope extends InheritedWidget {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-typedef _ChildWidgetBuilder =
-    Widget Function(BuildContext context, Widget? child);
+typedef _ChildWidgetBuilder = Widget Function(
+  BuildContext context,
+  Widget? child,
+);

@@ -1,5 +1,5 @@
 import 'package:df_localization/df_localization.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -52,15 +52,11 @@ class MyApp extends StatelessWidget {
                   // Translate the app into the system language.
                   FilledButton(
                     onPressed: () {
-                      // You can get the system locale of the device using
-                      // the `getPrimaryLocale` method.
-                      final locale =
-                          WidgetsBinding.instance.platformDispatcher.locale;
-                      // You can access the controller using the
-                      // `AutoTranslationScope.controllerOf` method.
+                      // `getSystemLocale()` works on every Flutter platform:
+                      // iOS, Android, macOS, Windows, Linux, Web.
                       AutoTranslationScope.controllerOf(
                         context,
-                      )?.setLocale(locale);
+                      )?.setLocale(getSystemLocale());
                     },
                     child: const Text('Default'),
                   ),

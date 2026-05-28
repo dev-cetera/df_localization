@@ -39,10 +39,12 @@ final class TranslationController {
   /// [TranslationController.i].
   static TranslationController createInstance({
     required String translationsDirPath,
+    ConfigFileType fileType = ConfigFileType.YAML,
   }) {
     assert(_i == null, 'TranslationController has already been initialized.');
     return _i ??= TranslationController(
       translationsDirPath: translationsDirPath,
+      fileType: fileType,
     );
   }
 
@@ -79,30 +81,38 @@ final class TranslationController {
   //
   //
 
-  Future<void> setLocale(Locale locale) => _pLocale.set(locale);
+  /// Switch the active locale and load its translation file. The returned
+  /// future resolves once `TranslationManager.config` has been swapped, so
+  /// callers can safely call `.tr()` synchronously afterwards.
+  Future<void> setLocale(Locale locale) async {
+    await _pLocale.set(locale);
+    ActiveLocale.set(locale);
+    await _readSafely(locale);
+  }
 
   late final _pLocale = _createLocalePod(cacheKey: cacheKey);
   GenericPod<Locale> get pLocale => _pLocale;
   Locale? get locale => _pLocale.getValue();
 
   SharedPod<Locale, String> _createLocalePod({required String cacheKey}) {
-    final fallbackLocale = WidgetsBinding.instance.platformDispatcher.locale;
     return SharedPod<Locale, String>(
       cacheKey,
+      // Triggered by the initial `refresh()` that the pod runs to pick up
+      // a previously-persisted locale on app launch — that path needs to
+      // load the translation file too, so we fire it from here. The set/
+      // setLocale path goes through `setLocale` above and awaits the read
+      // explicitly, so we don't need to re-fire it from `toValue`.
       fromValue: (localeString) {
-        final locale = localeFromString(localeString) ?? fallbackLocale;
-        _read(locale);
-        return locale;
+        final next = localeFromString(localeString) ?? fallbackLocale;
+        _readSafely(next).ignore();
+        return next;
       },
-      toValue: (locale) {
-        _read(locale);
-        return getNormalizedLanguageTag(locale);
-      },
+      toValue: getNormalizedLanguageTag,
       initialValue: fallbackLocale,
     );
   }
 
-  void _read(Locale? locale) async {
+  Future<void> _readSafely(Locale? locale) async {
     final languageTag = getNormalizedLanguageTag(locale ?? fallbackLocale);
     try {
       await _reader.read(languageTag);

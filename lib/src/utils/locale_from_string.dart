@@ -21,11 +21,15 @@ Locale? localeFromString(String? localeString) {
   }
   final parts = localeString.split('-');
   if (parts.length == 1) {
-    final languageCode = parts[0];
-    return Locale(languageCode);
-  } else {
-    final languageCode = parts.sublist(0, parts.length - 1).join('-');
-    final countryCode = parts.last;
-    return Locale(languageCode, countryCode);
+    return Locale(parts[0].toLowerCase());
   }
+  // BCP 47: language subtag is lowercase, region subtag is uppercase.
+  // Without this normalisation, round-tripping `Locale('en','US')` through
+  // [getNormalizedLanguageTag] (`en-us`) and back yields `Locale('en','us')`,
+  // which is not == to the original and confuses host-app locale equality
+  // checks (e.g. compledo's `pDeviceLocale` listener).
+  final languageCode =
+      parts.sublist(0, parts.length - 1).join('-').toLowerCase();
+  final countryCode = parts.last.toUpperCase();
+  return Locale(languageCode, countryCode);
 }

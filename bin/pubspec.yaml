@@ -11,12 +11,14 @@
 ## ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 ##.title~
 
-name: gen_translations_gemeni
+name: gen_translations
 homepage: https://dev-cetera.com/
-repository: https://github.com/robmllze/df_localization
 funding:
-- https://www.patreon.com/c/t0mb3rr
-- https://github.com/sponsors/t0mb3rr
+- https://www.buymeacoffee.com/dev_cetera
+- https://www.patreon.com/c/robelator
+- https://github.com/sponsors/robelator
+- https://www.patreon.com/c/robelator
+- https://github.com/sponsors/robelator
 - https://www.buymeacoffee.com/dev_cetera
 
 
@@ -32,8 +34,11 @@ dependencies:
   path: ^1.9.1
   args: ^2.7.0
   yaml: ^3.1.3
-  df_log: ^0.3.20
-  google_generative_ai: ^0.4.7
+  df_log: ^0.4.0
+  ai_broker:
+    git:
+      url: https://github.com/dev-cetera/ai_broker
+      ref: v0.2.0
 
 ## -----------------------------------------------------------------------------
 

@@ -14,18 +14,16 @@
 // ignore_for_file: body_might_complete_normally_nullable
 
 import 'package:flutter/foundation.dart' show kDebugMode;
-// ignore: unused_shown_name
-import 'package:flutter/widgets.dart' show Locale, WidgetsBinding, debugPrint;
+import 'package:flutter/widgets.dart' show Locale, WidgetsBinding;
 
 import '/_common.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
 class AutoTranslationController<
-  TRemoteDatabaseInterface extends DatabaseInterface,
-  TCachedDatabaseInterface extends DatabaseInterface,
-  TTranslationInterface extends TranslatorInterface
-> {
+    TRemoteDatabaseInterface extends DatabaseInterface,
+    TCachedDatabaseInterface extends DatabaseInterface,
+    TTranslationInterface extends TranslatorInterface> {
   //
   //
   //
@@ -54,8 +52,8 @@ class AutoTranslationController<
   //
   //
 
-  final _pCache = Pod<TTransaltionMap>({});
-  GenericPod<TTransaltionMap> get pCache => _pCache;
+  final _pCache = Pod<TTranslationMap>({});
+  GenericPod<TTranslationMap> get pCache => _pCache;
 
   late final _pLocale = _createLocalePod(cacheKey: cacheKey);
   GenericPod<Locale> get pLocale => _pLocale;
@@ -65,19 +63,22 @@ class AutoTranslationController<
   //
   //
 
-  // Ensures init is called only once.
-  bool _didInit = false;
+  // Caches the in-flight init so concurrent callers share one execution
+  // rather than each running setLocale(null) end-to-end.
+  Future<void>? _initFuture;
 
-  Future<void> init() async {
-    if (_didInit) return;
-    await setLocale(null);
-  }
+  Future<void> init() => _initFuture ??= setLocale(null);
 
   //
   //
   //
+
+  // Monotonically increases on every setLocale call so older async loads
+  // that resolve after a newer call can detect they are stale and bail.
+  int _activeRequestId = 0;
 
   Future<void> setLocale(Locale? locale) async {
+    final requestId = ++_activeRequestId;
     _didRequestTranslate.clear();
     await _pLocale.refresh();
     if (locale != null) {
@@ -85,29 +86,36 @@ class AutoTranslationController<
     } else if (this.locale == null) {
       await _pLocale.set(WidgetsBinding.instance.platformDispatcher.locale);
     }
-    final a = await _loadTranslations(persistentDatabaseBroker, this.locale!);
-    final b = _loadTranslations(remoteDatabaseBroker, this.locale!).then((c) {
-      final d = c ?? {};
-      _pCache.set(d);
+    final activeLocale = this.locale!;
+    ActiveLocale.set(activeLocale);
+    final cached =
+        await _loadTranslations(persistentDatabaseBroker, activeLocale);
+    if (requestId != _activeRequestId) return;
+    final remote = _loadTranslations(remoteDatabaseBroker, activeLocale).then((
+      result,
+    ) {
+      if (requestId != _activeRequestId) return result;
+      final next = result ?? const <String, TranslatedText>{};
+      _pCache.set(next);
       if (persistentDatabaseBroker != null) {
-        _saveTranslations(persistentDatabaseBroker!, this.locale!, d).end();
+        _saveTranslations(persistentDatabaseBroker!, activeLocale, next).end();
       }
-      return c;
+      return result;
     });
-    if (a == null) {
-      await b;
+    if (cached == null) {
+      await remote;
     } else {
-      _pCache.set(a);
+      _pCache.set(cached);
     }
-    _createTranslationManager();
-    _didInit = true;
+    if (requestId != _activeRequestId) return;
+    await _installConfig(requestId, activeLocale);
   }
 
   //
   //
   //
 
-  void _createTranslationManager() {
+  Future<void> _installConfig(int requestId, Locale activeLocale) async {
     final config = FileConfig(
       mapper: (textResult) {
         final textKey = textResult.key;
@@ -116,24 +124,34 @@ class AutoTranslationController<
           defaultValue = _pCache.getValue()[textKey]!.to!;
         } catch (_) {
           defaultValue = textResult.defaultValue;
-          // Only attempt to translagte if these conditions are met.
-          if (autoTranslate &&
-              translationBroker != null &&
-              locale != null) {
-            _throttle.run(() => _translateAndUpdate(defaultValue, textKey));
+          // Only attempt to translate if these conditions are met.
+          if (autoTranslate && translationBroker != null) {
+            // No global throttle: `_didRequestTranslate` already dedupes by
+            // key. Letting unique keys fire in parallel is the only way the
+            // first-frame burst actually results in translations — the
+            // previous global Throttle dropped every key but one.
+            // Pin the locale + requestId at mapper-firing time so a locale
+            // switch that happens during translation can't poison the
+            // new-locale cache with an old-locale translation.
+            _translateAndUpdate(
+              defaultValue,
+              textKey,
+              requestId,
+              activeLocale,
+            );
           }
         }
         return defaultValue;
       },
     );
-    TranslationManager.config = config;
+    await TranslationManager.setConfig(config);
   }
 
   //
   //
   //
 
-  Future<TTransaltionMap?> _loadTranslations(
+  Future<TTranslationMap?> _loadTranslations(
     DatabaseInterface? databaseBroker,
     Locale locale,
   ) async {
@@ -160,7 +178,7 @@ class AutoTranslationController<
   Async<Unit> _saveTranslations(
     DatabaseInterface databaseBroker,
     Locale locale,
-    TTransaltionMap translations,
+    TTranslationMap translations,
   ) {
     final path = _databasePath(translationPath, locale);
     final data = _convertTo(translations);
@@ -171,17 +189,19 @@ class AutoTranslationController<
   //
   //
 
-  final _throttle = Throttle(const Duration(microseconds: 500));
-
   // Ensures translateAndUpdate is called only once per key. This gets
   // reset in setLocale.
   final _didRequestTranslate = <String>{};
 
-  Future<void> _translateAndUpdate(String defaultValue, String key) async {
+  Future<void> _translateAndUpdate(
+    String defaultValue,
+    String key,
+    int requestId,
+    Locale activeLocale,
+  ) async {
     UNSAFE:
     {
       assert(autoTranslate, 'Auto-translation is disabled.');
-      assert(locale != null, 'Locale is not set.');
       assert(translationBroker != null, 'Translation broker is not set.');
 
       // Safety check #1: If the key is already being translated or has already
@@ -195,56 +215,42 @@ class AutoTranslationController<
       final test = _pCache.getValue()[key]?.to;
       if (test != null) return;
 
-      // debugPrint(
-      //   '[TranslationController._createTranslationManager] Did not get translation for key: $key. Attempting to translate...',
-      // );
-
       final translated = await translationBroker!
           .translateSentence(
             text: defaultValue,
-            languageCode: locale!.languageCode,
-            countryCode: locale!.countryCode,
+            languageCode: activeLocale.languageCode,
+            countryCode: activeLocale.countryCode,
           )
           .value;
 
-      // If the translation fails, no more attemps will be made since the
+      // If the translation fails, no more attempts will be made since the
       // key is already added to _didRequestTranslate. This is deliberate to
       // prevent excessive API calls.
       if (translated.isErr()) return;
 
-      // Update the cache in memory with the translated text.
-      _pCache.update(
-        (e) => e
-          ..[key] = TranslatedText(to: translated.unwrap(), from: defaultValue),
+      // Bail if the locale was switched while we were translating — applying
+      // an old-locale translation to the new-locale cache or DB would corrupt
+      // it. The requestId check also covers re-init of the controller.
+      if (requestId != _activeRequestId) return;
+
+      final translatedText = TranslatedText(
+        to: translated.unwrap(),
+        from: defaultValue,
       );
 
-      final path = _databasePath(translationPath, locale!);
+      // Update the in-memory cache. Build a new map rather than mutating in
+      // place — the previous value might be the `const {}` fallback from
+      // `setLocale` (an empty remote result), and mutating that throws.
+      _pCache.update((e) => {...e, key: translatedText});
 
-      // Update the persistent database.
-      final futureResult1 = persistentDatabaseBroker
-          ?.patch(
-            path: path,
-            data: {
-              key: TranslatedText(
-                to: translated.unwrap(),
-                from: defaultValue,
-              ).toMap(),
-            },
-          )
-          .value;
+      final path = _databasePath(translationPath, activeLocale);
+      final patch = {key: translatedText.toMap()};
 
-      // Update the remote database.ßå
-      final futureResult2 = remoteDatabaseBroker
-          ?.patch(
-            path: path,
-            data: {
-              key: TranslatedText(
-                to: translated.unwrap(),
-                from: defaultValue,
-              ).toMap(),
-            },
-          )
-          .value;
+      // Update the persistent + remote databases in parallel.
+      final futureResult1 =
+          persistentDatabaseBroker?.patch(path: path, data: patch).value;
+      final futureResult2 =
+          remoteDatabaseBroker?.patch(path: path, data: patch).value;
 
       await Future.wait([
         if (futureResult1 != null) futureResult1,
@@ -295,14 +301,14 @@ final class TranslatedText {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-TTransaltionMap _convertFrom(Map<String, dynamic> input) {
+TTranslationMap _convertFrom(Map<String, dynamic> input) {
   return input.map((k, v) {
     final v1 = TranslatedText.fromMap((v as Map).cast());
     return MapEntry(k, v1);
   });
 }
 
-Map<String, dynamic> _convertTo(TTransaltionMap input) {
+Map<String, dynamic> _convertTo(TTranslationMap input) {
   return input.map((k, v) => MapEntry(k, v.toMap()));
 }
 
@@ -315,4 +321,8 @@ String _databasePath(String translationPath, Locale locale) {
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-typedef TTransaltionMap = Map<String, TranslatedText>;
+typedef TTranslationMap = Map<String, TranslatedText>;
+
+/// Deprecated misspelling kept for one minor cycle. Prefer [TTranslationMap].
+@Deprecated('Use TTranslationMap (correct spelling) instead.')
+typedef TTransaltionMap = TTranslationMap;

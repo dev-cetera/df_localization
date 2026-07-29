@@ -21,6 +21,7 @@ A package that simplifies adding localization to your Flutter app. It supports a
 - Built-in translation services: **Google Translate**, plus any LLM (**Claude, Gemini, OpenAI**, or a custom provider) through a single `LlmTranslatorBroker` backed by [`ai_broker`](https://pub.dev/packages/ai_broker).
 - Built-in storage: **Firebase Firestore** for the remote database and **SharedPreferences** for local caching. The `DatabaseInterface` / `TranslatorInterface` contracts are tiny — swap any of them out for your own.
 - Caches translations for faster performance, offline access, and reduced API costs.
+- **Built-in translation versioning** — updating copy in a new release never changes what already-deployed builds display. Each string is versioned by a hash of its source text, so a one-string change adds one new entry instead of snapshotting the whole database.
 - The alternative manual translation method supports multiple file formats (JSON, YAML).
 - **Standard ICU MessageFormat** support via `.trIcu()` — plural / select / gender, all the CLDR plural rules per locale.
 - **Right-to-left aware** out of the box — `isRtlLocale()` / `getTextDirection()` helpers plus seamless interaction with Flutter's `Directionality`.
@@ -135,6 +136,38 @@ Widget build(BuildContext context) {
   );
 }
 ```
+
+### Translation versioning — deployed builds keep their copy
+
+A shared remote database creates a subtle problem: if release v2 of your app rewords a string and re-translates it, and v1 reads the *same* database entry, users still on v1 suddenly see copy that was written for v2. `AutoTranslationController` prevents this by default (`versionBySourceText: true`).
+
+Instead of storing each translation under its plain key, it stores it under the key **plus a short, stable hash of the English source text**:
+
+```yaml
+# translations/de-de (remote DB document)
+welcome_message@@6586cfa852669da3:   # v1 shipped "Welcome!"
+  to: "Willkommen!"
+  from: "Welcome!"
+welcome_message@@2bcda9892f4a0a61:   # v2 shipped "Welcome back!"
+  to: "Willkommen zurück!"
+  from: "Welcome back!"
+```
+
+- A deployed build always looks up the hash of the copy *it shipped with*, so it keeps resolving the exact translation it was released against — forever.
+- Changing 1 string in a new release adds 1 new entry. Unchanged strings hash identically and keep sharing their existing entry — no database copy, no re-translation.
+- Fixing a *bad translation* (same English source, corrected target text) edits the shared entry, so the fix reaches **all** deployed builds — which is what you want.
+
+**Migrating existing data.** Databases written before versioning keep working: lookups fall back to the plain key whenever its stored `from` still matches the rendered copy. To snapshot existing data under versioned keys, run once (e.g. behind a dev/admin action):
+
+```dart
+await controller.migrateToVersionedKeys([const Locale('en', 'US'), const Locale('de', 'DE')]);
+```
+
+The migration is additive and idempotent — plain keys are kept so builds already in the field keep resolving.
+
+**Opting out.** Pass `versionBySourceText: false` to restore the old shared-entry behavior. For `RemoteTranslationController` the same flag exists but defaults to `false` — enable it only if your server keys its map with `versionedTranslationKey(key, sourceText)` (exported by this package; a pure-Dart backend can get the same helper by depending on [`df_config`](https://pub.dev/packages/df_config) ≥ 0.8.1 directly).
+
+**Housekeeping.** Strings you reword repeatedly accumulate one entry per revision (deliberately — old builds need them). If a locale document ever grows too large, prune entries whose hashes no live release references.
 
 ## Example 2 - Using any LLM (Claude / Gemini / OpenAI):
 
@@ -354,6 +387,8 @@ await controller.setLocale(const Locale('de', 'DE'));
 ```
 
 Stale-load protection is built in: rapid `setLocale` calls cannot let an older fetch's result overwrite a newer one.
+
+To pin each deployed build to the copy it shipped with (see *Translation versioning* above), have your server key the map with `versionedTranslationKey(key, sourceText)` and construct the controller with `versionBySourceText: true`.
 
 <!-- END _README_CONTENT -->
 

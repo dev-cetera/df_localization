@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0]
+
+- feat: Add **source-text translation versioning** to `AutoTranslationController` (`versionBySourceText`, default `true`). Translations are stored under `<key>@@<hash(sourceText)>`, so rewording a string in a new release adds a new entry instead of overwriting the one already-deployed builds read — a one-string change costs one entry, not a database snapshot. Fixing a bad translation (same source) still propagates to all builds. Lookups fall back to legacy plain-key entries whose stored `from` matches, so pre-versioning databases keep resolving; run `migrateToVersionedKeys(locales)` once to additively snapshot them. `RemoteTranslationController` gets the same flag (default `false`) for servers that key their maps with `versionedTranslationKey(key, sourceText)`.
+- feat: The versioning helpers (`versionedTranslationKey`, `translationSourceHash`, `kTranslationVersionSeparator`) live in `df_config` ≥ 0.8.1 (pure Dart) and are re-exported here — Dart backends producing translation maps server-side can depend on `df_config` alone to key them. The hash is deterministic across platforms including web, and is pinned by a golden test.
+- chore: Remove the unused `df_log` dependency — it was never imported and its `^0.5.1` constraint conflicted with hosts pinning newer `df_log` versions.
+
 ## [0.6.0]
 
 - breaking: Remove `ClaudeTranslatorBroker`, `GeminiTranslatorBroker`, `OpenAITranslatorBroker` — replaced by the unified `LlmTranslatorBroker` with `.claude()` / `.gemini()` / `.openai()` factory constructors that drive any `AiBroker` from `ai_broker`.

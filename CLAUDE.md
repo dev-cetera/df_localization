@@ -36,7 +36,7 @@ All three live in `lib/src/` and are mutually exclusive at runtime (the last `in
 
 ## How `df_config` is used
 
-`df_config` ≥ **0.8.0** is the contract. The relevant surface:
+`df_config` ≥ **0.8.1** is the contract. The relevant surface:
 
 - **`TranslationManager`** is `abstract final class` — *static only*. Do **not** try to `new TranslationManager()`; it won't compile.
 - Install a config with `await TranslationManager.setConfig(fileConfig)`. It returns `Future<FileConfig>`, internally serialises writes on a `_writeChain` so rapid `setLocale` calls cannot leave the active config half-written. **Always await it** — otherwise callers that hit `.tr()` synchronously after will see the previous mapper.
@@ -59,7 +59,14 @@ All three live in `lib/src/` and are mutually exclusive at runtime (the last `in
 
 - **`TranslationController.setLocale` awaits the file read.** Returning early would race `.tr()` calls fired immediately after. The bootstrap path (loading a persisted locale at app start) still goes through the pod's `fromValue` callback, which fires `_readSafely(...).ignore()` — that one is fire-and-forget because nothing is awaiting it. Do not also fire `_read` from `toValue`; `setLocale` already awaits explicitly there.
 
-- **`TranslatedText` shape** stored in the database: `{to, from}`. `from` is the original default text — kept so a future migration can detect when source copy changed and the translation is stale. `RemoteTranslationController` deliberately uses a flat `Map<String, String>` instead (the server is responsible for staleness).
+- **`TranslatedText` shape** stored in the database: `{to, from}`. `from` is the original default text. Besides staleness detection, `from` is now load-bearing for **source-text versioning** (below): the stored key's hash is derived from it, and the legacy-plain-key fallback only fires when `from` matches the rendered copy. `RemoteTranslationController` deliberately uses a flat `Map<String, String>` instead (the server is responsible for staleness/versioning).
+
+- **Source-text versioning** (`AutoTranslationController`, `versionBySourceText` — default `true`): translations are stored under `<key>@@<hash(source)>`, not the plain `<key>`. The helpers (`versionedTranslationKey` / `translationSourceHash` / `kTranslationVersionSeparator`) live in **`df_config`** (`lib/src/support/versioned_translation_key.dart` there) — deliberately, so pure-Dart backends can key server-side maps without depending on this Flutter package; they reach consumers here via the wholesale `df_config` re-export. This is how an already-deployed build keeps reading the exact translation it shipped against: a newer build that edits a string writes a *new* entry under a new hash instead of overwriting the shared one, so a one-string change costs one new entry, not a copy of the DB. **Invariants not to regress:**
+  - The write path (`_translateAndUpdate`) and the read path (`_installConfig`'s mapper) must key by the *same* composite (`storageKey`). The mapper passes `storageKey` (not the plain key) into `_translateAndUpdate`, and `TranslatedText.from` is set to the source so `hash(from)` equals the hash embedded in the key.
+  - The mapper's **legacy fallback** reads a plain-`<key>` entry only when `legacy.from == source`. It is read-only — never write back under the plain key, or you reintroduce the shared-overwrite bug. Covered by the `legacy fallback` test.
+  - `translationSourceHash` must stay **deterministic across platforms including web** — it uses `< 2^53` integer math on purpose (no `String.hashCode`, no 64-bit bitwise ops). Changing the algorithm silently orphans every existing entry.
+  - `migrateToVersionedKeys(locales)` is **additive and idempotent**: it *adds* `<key>@@<hash(from)>` alongside the existing plain key (never deletes it, so old builds keep resolving) and skips entries already versioned/migrated. Covered by the `migrateToVersionedKeys` test.
+  - `RemoteTranslationController` has the same flag (default **`false`**, host-owned): when `true` it looks up `versionedTranslationKey(key, source)` before the plain key, so a server that keys its map with the same helper pins each build to its shipped copy.
 
 - **`init()` is idempotent** on `AutoTranslationController` / `RemoteTranslationController` — concurrent callers share `_initFuture`. `AutoTranslationScope` calls it in `initState`.
 

@@ -35,6 +35,21 @@ class AutoTranslationController<
   final String cacheKey;
   final String translationPath;
 
+  /// When `true` (the default), every stored translation is keyed by its
+  /// source-text version — `<key>@@<hash(source)>` — instead of the plain
+  /// `<key>`. This is what keeps an already-deployed build reading the exact
+  /// translation it shipped against: newer builds that edit a string write a
+  /// *new* entry under a new hash rather than overwriting the shared one, so
+  /// changing one string costs one new entry, not a copy of the database.
+  ///
+  /// Reads transparently fall back to a legacy plain-`<key>` entry whenever
+  /// its stored `from` still matches the current source, so pre-versioning
+  /// data keeps resolving without re-translating unchanged copy. Run
+  /// [migrateToVersionedKeys] once to additively snapshot existing data.
+  ///
+  /// Set to `false` only to preserve the exact pre-0.6 plain-key behaviour.
+  final bool versionBySourceText;
+
   //
   //
   //
@@ -46,6 +61,7 @@ class AutoTranslationController<
     this.translationBroker,
     this.cacheKey = 'locale',
     this.translationPath = 'translations',
+    this.versionBySourceText = true,
   });
 
   //
@@ -119,29 +135,44 @@ class AutoTranslationController<
     final config = FileConfig(
       mapper: (textResult) {
         final textKey = textResult.key;
-        String defaultValue;
-        try {
-          defaultValue = _pCache.getValue()[textKey]!.to!;
-        } catch (_) {
-          defaultValue = textResult.defaultValue;
-          // Only attempt to translate if these conditions are met.
-          if (autoTranslate && translationBroker != null) {
-            // No global throttle: `_didRequestTranslate` already dedupes by
-            // key. Letting unique keys fire in parallel is the only way the
-            // first-frame burst actually results in translations — the
-            // previous global Throttle dropped every key but one.
-            // Pin the locale + requestId at mapper-firing time so a locale
-            // switch that happens during translation can't poison the
-            // new-locale cache with an old-locale translation.
-            _translateAndUpdate(
-              defaultValue,
-              textKey,
-              requestId,
-              activeLocale,
-            );
+        final source = textResult.defaultValue;
+        // Content-addressed lookup key: the same source copy always resolves
+        // to the same entry, and edited copy resolves to a fresh one.
+        final storageKey = versionBySourceText
+            ? versionedTranslationKey(textKey, source)
+            : textKey;
+        final cache = _pCache.getValue();
+        var hit = cache[storageKey];
+        if (hit == null && versionBySourceText) {
+          // Legacy fallback: a pre-versioning entry stored under the plain key
+          // is still correct as long as its recorded source matches the copy
+          // being rendered. Lets un-migrated databases keep resolving for new
+          // clients without re-translating unchanged strings.
+          final legacy = cache[textKey];
+          if (legacy != null && legacy.from == source) {
+            hit = legacy;
           }
         }
-        return defaultValue;
+        final to = hit?.to;
+        if (to != null) return to;
+        // Cache miss: return the default English and, if enabled, translate in
+        // the background under `storageKey`.
+        if (autoTranslate && translationBroker != null) {
+          // No global throttle: `_didRequestTranslate` already dedupes by
+          // (versioned) key. Letting unique keys fire in parallel is the only
+          // way the first-frame burst actually results in translations — the
+          // previous global Throttle dropped every key but one.
+          // Pin the locale + requestId at mapper-firing time so a locale
+          // switch that happens during translation can't poison the
+          // new-locale cache with an old-locale translation.
+          _translateAndUpdate(
+            source,
+            storageKey,
+            requestId,
+            activeLocale,
+          );
+        }
+        return source;
       },
     );
     await TranslationManager.setConfig(config);
@@ -183,6 +214,64 @@ class AutoTranslationController<
     final path = _databasePath(translationPath, locale);
     final data = _convertTo(translations);
     return databaseBroker.write(path: path, data: data);
+  }
+
+  //
+  //
+  //
+
+  /// One-time, idempotent, **additive** migration of pre-versioning data to
+  /// source-versioned keys, for every configured database.
+  ///
+  /// For each existing plain `<key>` entry it *adds* a `<key>@@<hash(from)>`
+  /// entry pointing at the same translation. The original plain key is
+  /// **kept**, so builds already in the field — which still look translations
+  /// up by the plain key — keep resolving, while newer builds resolve the
+  /// versioned key. Safe to run more than once: entries that are already
+  /// versioned (or already migrated) are skipped.
+  ///
+  /// Pass every [locales] you hold data for; the controller does not enumerate
+  /// them. Typically called behind a dev/admin action, not on every launch.
+  Future<void> migrateToVersionedKeys(Iterable<Locale> locales) async {
+    final brokers = <DatabaseInterface?>[
+      remoteDatabaseBroker,
+      persistentDatabaseBroker,
+    ];
+    for (final broker in brokers) {
+      if (broker == null) continue;
+      for (final locale in locales) {
+        await _migrateVersionedKeysFor(broker, locale);
+      }
+    }
+  }
+
+  Future<void> _migrateVersionedKeysFor(
+    DatabaseInterface broker,
+    Locale locale,
+  ) async {
+    final existing = await _loadTranslations(broker, locale);
+    if (existing == null || existing.isEmpty) return;
+    final additions = <String, TranslatedText>{};
+    for (final entry in existing.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      final from = value.from;
+      // Without a recorded source there is nothing to hash against.
+      if (from == null) continue;
+      final hash = translationSourceHash(from);
+      final suffix = '$kTranslationVersionSeparator$hash';
+      // Already versioned for this source — nothing to do.
+      if (key.endsWith(suffix)) continue;
+      final versionedKey = '$key$suffix';
+      // Already migrated in a previous run.
+      if (existing.containsKey(versionedKey)) continue;
+      additions[versionedKey] = value;
+    }
+    if (additions.isEmpty) return;
+    final path = _databasePath(translationPath, locale);
+    // Await completion so callers can migrate one locale after another, then
+    // discard the Outcome — migration is best-effort maintenance.
+    (await broker.patch(path: path, data: _convertTo(additions)).value).end();
   }
 
   //

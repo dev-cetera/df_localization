@@ -57,9 +57,18 @@ class RemoteTranslationController {
   /// `SharedPreferences` key used to persist the current locale.
   final String cacheKey;
 
+  /// When `true`, `.tr()` lookups are keyed by source-text version
+  /// (`versionedTranslationKey(key, source)`) before falling back to the plain
+  /// key. Enable this only if [fetchTranslations] returns a map whose keys the
+  /// server built with the same [versionedTranslationKey] convention — that is
+  /// how a server-driven setup pins each deployed build to the copy it shipped
+  /// against. Defaults to `false` so existing plain-key fetchers are untouched.
+  final bool versionBySourceText;
+
   RemoteTranslationController({
     required this.fetchTranslations,
     this.cacheKey = 'locale',
+    this.versionBySourceText = false,
   });
 
   // ---------------------------------------------------------------------------
@@ -120,6 +129,14 @@ class RemoteTranslationController {
     await TranslationManager.setConfig(
       FileConfig(
         mapper: (textResult) {
+          if (versionBySourceText) {
+            final versionedKey = versionedTranslationKey(
+              textResult.key,
+              textResult.defaultValue,
+            );
+            final versionedHit = translations[versionedKey];
+            if (versionedHit != null) return versionedHit;
+          }
           return translations[textResult.key] ?? textResult.defaultValue;
         },
       ),

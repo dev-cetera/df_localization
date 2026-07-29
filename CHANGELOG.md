@@ -1,10 +1,14 @@
 # Changelog
 
-## [0.7.0]
+## [0.7.1]
 
 - feat: Add **source-text translation versioning** to `AutoTranslationController` (`versionBySourceText`, default `true`). Translations are stored under `<key>@@<hash(sourceText)>`, so rewording a string in a new release adds a new entry instead of overwriting the one already-deployed builds read — a one-string change costs one entry, not a database snapshot. Fixing a bad translation (same source) still propagates to all builds. Lookups fall back to legacy plain-key entries whose stored `from` matches, so pre-versioning databases keep resolving; run `migrateToVersionedKeys(locales)` once to additively snapshot them. `RemoteTranslationController` gets the same flag (default `false`) for servers that key their maps with `versionedTranslationKey(key, sourceText)`.
 - feat: The versioning helpers (`versionedTranslationKey`, `translationSourceHash`, `kTranslationVersionSeparator`) live in `df_config` ≥ 0.8.1 (pure Dart) and are re-exported here — Dart backends producing translation maps server-side can depend on `df_config` alone to key them. The hash is deterministic across platforms including web, and is pinned by a golden test.
-- chore: Remove the unused `df_log` dependency — it was never imported and its `^0.5.1` constraint conflicted with hosts pinning newer `df_log` versions.
+- chore: Remove the `df_log` dependency — the runtime library never imported it, and the `gen-translations` CLI now prints with self-contained ANSI colors. Its `^0.5.1` constraint previously conflicted with hosts pinning newer `df_log` versions.
+
+## [0.7.0]
+
+- Tagged but never published (pub.dev validation failure); all changes shipped in 0.7.1.
 
 ## [0.6.0]
 

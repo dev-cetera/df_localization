@@ -415,7 +415,7 @@ void main() {
 
     test('legacy fallback: un-migrated data still resolves for new builds',
         () async {
-      // A DB that only has a plain-key entry (as written by pre-0.6 clients).
+      // A DB that only has a plain-key entry (as written by pre-0.7 clients).
       final remote = _FakeDatabase()
         ..store['translations/de-de'] = {
           'welcome_key': {'to': 'Willkommen', 'from': 'Welcome'},

@@ -16,8 +16,18 @@ import 'dart:io';
 
 import 'package:ai_broker/ai_broker.dart';
 import 'package:args/args.dart';
-import 'package:df_log/df_log.dart';
 import 'package:path/path.dart' as p;
+
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+// Minimal ANSI-colored console output. Deliberately self-contained so the
+// published package does not carry a logging dependency just for this CLI.
+final class Log {
+  static void printBlue(Object? m) => print('\x1B[94m$m\x1B[0m');
+  static void printGreen(Object? m) => print('\x1B[92m$m\x1B[0m');
+  static void printYellow(Object? m) => print('\x1B[93m$m\x1B[0m');
+  static void printRed(Object? m) => print('\x1B[91m$m\x1B[0m');
+}
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 

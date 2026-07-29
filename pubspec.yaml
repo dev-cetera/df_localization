@@ -20,7 +20,7 @@ funding:
   - https://github.com/sponsors/robelator
 
 description: A package that simplifies adding localization to your Flutter app.
-version: 0.7.0
+version: 0.7.1
 topics:
   - configuration
   - locale

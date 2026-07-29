@@ -47,7 +47,7 @@ class AutoTranslationController<
   /// data keeps resolving without re-translating unchanged copy. Run
   /// [migrateToVersionedKeys] once to additively snapshot existing data.
   ///
-  /// Set to `false` only to preserve the exact pre-0.6 plain-key behaviour.
+  /// Set to `false` only to preserve the exact pre-0.7 plain-key behaviour.
   final bool versionBySourceText;
 
   //

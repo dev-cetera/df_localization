@@ -53,9 +53,33 @@ extension TrIcuX on String {
     final template = tr(preferKey: preferKey, secondarySettings: null);
     if (args == null || args.isEmpty) return template;
     final effective = locale ?? ActiveLocale.current;
-    return MessageFormat(
-      template,
-      locale: effective.toLanguageTag(),
-    ).format(args);
+    final languageTag = effective.toLanguageTag();
+    try {
+      return MessageFormat(template, locale: languageTag).format(args);
+    } catch (e, s) {
+      // A malformed ICU template must never crash the host: `MessageFormat`
+      // throws `mismatched { or }` during build when the template has
+      // unbalanced braces (e.g. a damaged *stored* translation, or an
+      // author typo). Forward the error so a host with an installed sink
+      // can observe the misconfiguration, then degrade gracefully — this
+      // mirrors `df_config`'s `tr()` best-effort guarantee.
+      TranslationManager.reportError('trIcu', e, s);
+      // Prefer the in-code source template — the part of this string
+      // before the key delimiter (`'<icu-template>||key'`), which the
+      // developer wrote and is presumed well-formed — so a corrupt stored
+      // translation renders the source-language plural instead of raw ICU
+      // syntax.
+      final delimiter = TranslationManager.config.settings.delimiter;
+      final delimiterIndex = delimiter.isEmpty ? -1 : lastIndexOf(delimiter);
+      final source = delimiterIndex == -1 ? this : substring(0, delimiterIndex);
+      if (source != template) {
+        try {
+          return MessageFormat(source, locale: languageTag).format(args);
+        } catch (_) {
+          // The source template is malformed too — fall through to raw.
+        }
+      }
+      return source;
+    }
   }
 }

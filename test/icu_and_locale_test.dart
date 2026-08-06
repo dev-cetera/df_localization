@@ -123,6 +123,70 @@ void main() {
       );
     });
 
+    test(
+      'inline ICU template as source text is not corrupted by tr() '
+      '(grey-screen regression)',
+      () async {
+        await makeController(
+          {'unused': 'placeholder'},
+          const Locale('en', 'US'),
+        );
+        // The template itself is the in-code source string — there is no
+        // matching translation entry, so `.tr()` passes it straight through
+        // to MessageFormat. Before the df_config `_wrapIfNeeded` fix, `.tr()`
+        // prepended a lone `{{` to this `}}`-terminated template and mangled
+        // its braces, and the unguarded MessageFormat build then threw
+        // `mismatched { or }`, greying every screen that rendered a plural.
+        const icu = '{count, plural, =0{No items} one{# item} other{# items}}';
+        expect(icu.trIcu(args: {'count': 0}), equals('No items'));
+        expect(icu.trIcu(args: {'count': 1}), equals('1 item'));
+        expect(icu.trIcu(args: {'count': 5}), equals('5 items'));
+      },
+    );
+
+    test('malformed ICU template falls back instead of throwing', () async {
+      await makeController(
+        {'unused': 'placeholder'},
+        const Locale('en', 'US'),
+      );
+      // Unbalanced braces make MessageFormat throw during build. The guard
+      // must swallow that and return the resolved template so the host keeps
+      // rendering rather than crashing/greying.
+      const malformed = '{count, plural, one{# item';
+      expect(
+        () => malformed.trIcu(args: {'count': 1}),
+        returnsNormally,
+      );
+      expect(malformed.trIcu(args: {'count': 1}), equals(malformed));
+    });
+
+    test(
+        'malformed STORED translation falls back to the formatted in-code '
+        'source template', () async {
+      // A corrupt translation in the store (missing closing braces) resolves
+      // through the config's mapper; MessageFormat throws on it. The guard
+      // must then format the in-code source template (the part before the
+      // `||key` delimiter) instead of surfacing raw broken ICU syntax —
+      // matching what a host-side fallback wrapper would do.
+      await TranslationManager.setConfig(
+        FileConfig(
+          mapper: (textResult) =>
+              {'cart': '{count, plural, one{# Artikel'}[textResult.key] ??
+              textResult.defaultValue,
+        ),
+      );
+      expect(
+        '{count, plural, one{# item} other{# items}}||cart'
+            .trIcu(args: {'count': 2}),
+        equals('2 items'),
+      );
+      expect(
+        '{count, plural, one{# item} other{# items}}||cart'
+            .trIcu(args: {'count': 1}),
+        equals('1 item'),
+      );
+    });
+
     test('locale override beats ActiveLocale', () async {
       await makeController(
         {

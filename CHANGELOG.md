@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.2]
+
+- fix: `String.trIcu` now guards the `MessageFormat` build/format in a try/catch. A malformed ICU template (a corrupt stored translation, or an author typo) previously threw `mismatched { or }` straight through to the host, greying every screen that rendered a plural. On failure it now forwards the error to `TranslationManager.reportError` and degrades gracefully: it formats the in-code source template (the part of the string before the `||key` delimiter, which the developer wrote) with the same args, falling back to the raw source only if that fails too — so a corrupt stored translation renders the source-language plural instead of crashing or showing broken ICU syntax. This matches `df_config`'s "a `.tr()` call must never crash the host" guarantee.
+- fix: Bump `df_config` to `^0.8.2`, which stops the placeholder engine from corrupting inline ICU templates (`{count, plural, …}}`) during `.tr()`'s primary pass. Together these fix the greyed-screen crash when an ICU plural is rendered through a mapper-less `FileConfig` or before the first config install.
+
 ## [0.7.1]
 
 - feat: Add **source-text translation versioning** to `AutoTranslationController` (`versionBySourceText`, default `true`). Translations are stored under `<key>@@<hash(sourceText)>`, so rewording a string in a new release adds a new entry instead of overwriting the one already-deployed builds read — a one-string change costs one entry, not a database snapshot. Fixing a bad translation (same source) still propagates to all builds. Lookups fall back to legacy plain-key entries whose stored `from` matches, so pre-versioning databases keep resolving; run `migrateToVersionedKeys(locales)` once to additively snapshot them. `RemoteTranslationController` gets the same flag (default `false`) for servers that key their maps with `versionedTranslationKey(key, sourceText)`.

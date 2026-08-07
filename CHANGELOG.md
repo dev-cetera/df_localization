@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.3]
+
+- chore: bump `df_config` to `^0.8.3`, which pins `df_string: ^0.4.0`. This carries df_string 0.4.0's case-conversion digit-boundary change (`phone_e164` instead of `phone_e_164`) through the shared `.tr()` engine. No df_localization API change.
+
 ## [0.7.2]
 
 - fix: `String.trIcu` now guards the `MessageFormat` build/format in a try/catch. A malformed ICU template (a corrupt stored translation, or an author typo) previously threw `mismatched { or }` straight through to the host, greying every screen that rendered a plural. On failure it now forwards the error to `TranslationManager.reportError` and degrades gracefully: it formats the in-code source template (the part of the string before the `||key` delimiter, which the developer wrote) with the same args, falling back to the raw source only if that fails too — so a corrupt stored translation renders the source-language plural instead of crashing or showing broken ICU syntax. This matches `df_config`'s "a `.tr()` call must never crash the host" guarantee.

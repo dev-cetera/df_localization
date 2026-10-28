@@ -11,9 +11,9 @@ dependencies:
     sdk: flutter
   df_localization:
     path: ../
-  df_config: ^0.8.0
-  df_safer_dart: ^0.21.0
-  df_pod: ^0.20.0
+  df_config: ^0.9.0
+  df_safer_dart: ^0.22.0
+  df_pod: ^0.21.0
 dev_dependencies:
   flutter_lints: ^6.0.0
 

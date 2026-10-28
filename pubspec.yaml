@@ -13,14 +13,10 @@
 
 name: df_localization
 homepage: https://dev-cetera.com/
-repository: https://github.com/robmllze/df_localization
-funding:
-  - https://www.buymeacoffee.com/dev_cetera
-  - https://www.patreon.com/c/robelator
-  - https://github.com/sponsors/robelator
+repository: https://github.com/dev-cetera/df_localization
 
 description: A package that simplifies adding localization to your Flutter app.
-version: 0.7.3
+version: 0.8.0
 topics:
   - configuration
   - locale

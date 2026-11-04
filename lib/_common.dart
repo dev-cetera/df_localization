@@ -25,6 +25,7 @@ export 'dart:convert';
 export 'package:ai_broker/ai_broker.dart'
     show
         AiBroker,
+        ChatBroker,
         AiBrokerException,
         AiMessage,
         AiRole,

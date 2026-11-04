@@ -79,7 +79,7 @@ All three live in `lib/src/` and are mutually exclusive at runtime (the last `in
 Implementations shipped:
 
 - **`GoogleTranslatorBroker`** — direct REST call to the Google Translate v2 API. Cheapest option for short UI strings.
-- **`LlmTranslatorBroker`** — the unified LLM broker. Backed by any `AiBroker` from `ai_broker`. Use the named factories:
+- **`LlmTranslatorBroker`** — the unified LLM broker. Backed by any `ChatBroker` from `ai_broker` (≥ 0.4 capability split). Use the named factories:
   - `LlmTranslatorBroker.claude(apiKey: ...)` — defaults to `claude-3-haiku-20240307`.
   - `LlmTranslatorBroker.gemini(apiKey: ...)` — defaults to `gemini-1.5-flash-8b`.
   - `LlmTranslatorBroker.openai(apiKey: ...)` — defaults to `gpt-4o-mini`.
@@ -87,7 +87,7 @@ Implementations shipped:
 
 Per-vendor message-type clones (`ClaudeContent` / `GeminiContent` / `OpenAIContent`) were deleted — `LlmTranslatorBroker` uses `AiMessage` directly. If you need provider-specific behaviour, configure the `systemPrompt` / `temperature` / `maxTokens` parameters or subclass.
 
-The `AiBroker` and friends (`AnthropicBroker`, `GeminiBroker`, `OpenAiBroker`, `AiMessage`, `ChatRequest`, `AiBrokerException`) are re-exported from `_common.dart` — depend on those rather than re-importing `package:ai_broker` directly inside this package's `lib/src/`.
+The `AiBroker` and friends (`ChatBroker`, `AnthropicBroker`, `GeminiBroker`, `OpenAiBroker`, `AiMessage`, `ChatRequest`, `AiBrokerException`) are re-exported from `_common.dart` — depend on those rather than re-importing `package:ai_broker` directly inside this package's `lib/src/`.
 
 ## Database brokers
 

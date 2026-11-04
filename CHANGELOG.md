@@ -1,6 +1,11 @@
 # Changelog
 
 
+## [0.9.0]
+
+- breaking: Bump `ai_broker` to `^0.5.1` (was `^0.2.1`, which held hosts on 0.2.2). ai_broker 0.4.0 split capabilities off `AiBroker`, so `LlmTranslatorBroker.broker` and the `broker:` parameter on `.claude()` / `.gemini()` / `.openai()` are now typed `ChatBroker`. The built-in `AnthropicBroker` / `GeminiBroker` / `OpenAiBroker` are all `ChatBroker`s, so callers using the factories need no change; a custom provider must now extend `ChatBroker`.
+- chore: The `gen-translations` CLI's `bin/pubspec.yaml` now pins `ai_broker` at `v0.5.1`.
+
 ## [0.8.0]
 
 - chore: standardize README and CI/CD workflows, remove donation links, update contact info and repository links

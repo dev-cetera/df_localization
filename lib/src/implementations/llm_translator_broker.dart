@@ -15,7 +15,7 @@ import '/_common.dart';
 
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
-/// Vendor-neutral LLM-backed translator. Pass any [AiBroker] (Anthropic,
+/// Vendor-neutral LLM-backed translator. Pass any [ChatBroker] (Anthropic,
 /// Gemini, OpenAI, or a custom one) and this class drives it through the
 /// same `AiMessage` / `ChatRequest` shape `ai_broker` already exposes — no
 /// per-provider message-type clones.
@@ -26,7 +26,7 @@ import '/_common.dart';
 class LlmTranslatorBroker extends TranslatorInterface<AiMessage> {
   /// The underlying provider. Owns the HTTP call; this class only owns
   /// the prompt shape and the `df_safer_dart` error wrapping.
-  final AiBroker broker;
+  final ChatBroker broker;
 
   /// Provider-specific model id, e.g. `'claude-3-haiku-20240307'`,
   /// `'gemini-1.5-flash-8b'`, `'gpt-4o-mini'`.
@@ -60,7 +60,7 @@ class LlmTranslatorBroker extends TranslatorInterface<AiMessage> {
     String systemPrompt = defaultSystemPrompt,
     double temperature = 0.2,
     int maxTokens = 1000,
-    AiBroker? broker,
+    ChatBroker? broker,
   }) =>
       LlmTranslatorBroker(
         apiKey: apiKey,
@@ -78,7 +78,7 @@ class LlmTranslatorBroker extends TranslatorInterface<AiMessage> {
     String systemPrompt = defaultSystemPrompt,
     double temperature = 0.2,
     int maxTokens = 1000,
-    AiBroker? broker,
+    ChatBroker? broker,
   }) =>
       LlmTranslatorBroker(
         apiKey: apiKey,
@@ -96,7 +96,7 @@ class LlmTranslatorBroker extends TranslatorInterface<AiMessage> {
     String systemPrompt = defaultSystemPrompt,
     double temperature = 0.2,
     int maxTokens = 1000,
-    AiBroker? broker,
+    ChatBroker? broker,
   }) =>
       LlmTranslatorBroker(
         apiKey: apiKey,

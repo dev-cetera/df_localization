@@ -167,7 +167,7 @@ The migration is additive and idempotent — plain keys are kept so builds alrea
 
 ## Example 2 - Using any LLM (Claude / Gemini / OpenAI):
 
-Swap out `GoogleTranslatorBroker` for `LlmTranslatorBroker` to translate via an LLM. The same class drives every provider — pick the named constructor that matches your API key, or pass any `AiBroker` instance for a provider not listed here.
+Swap out `GoogleTranslatorBroker` for `LlmTranslatorBroker` to translate via an LLM. The same class drives every provider — pick the named constructor that matches your API key, or pass any `ChatBroker` instance for a provider not listed here.
 
 ```dart
 // Anthropic Claude
@@ -179,7 +179,7 @@ translationBroker: LlmTranslatorBroker.gemini(apiKey: 'YOUR_GEMINI_KEY'),
 // OpenAI
 translationBroker: LlmTranslatorBroker.openai(apiKey: 'YOUR_OPENAI_KEY'),
 
-// Any other provider — pass your own AiBroker implementation.
+// Any other provider — pass your own ChatBroker implementation.
 translationBroker: LlmTranslatorBroker(
   apiKey: 'YOUR_KEY',
   broker: MyCustomBroker(),
